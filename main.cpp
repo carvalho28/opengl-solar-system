@@ -24,6 +24,8 @@
 std::string path = std::filesystem::current_path();
 // SPHERE
 std::string sphere_obj = path + "/resources/models/sphere/shpere.obj";
+// BACKGROUND
+std::string space_tex = path + "/resources/textures/space_texture.jpg";
 // SUN
 std::string sun_tex = path + "/resources/textures/sun_texture.jpg";
 // MERCURY
@@ -32,6 +34,8 @@ std::string mercury_tex = path + "/resources/textures/mercury_texture.jpg";
 std::string venus_tex = path + "/resources/textures/venus_texture.jpg";
 // EARTH
 std::string earth_tex = path + "/resources/textures/earth_texture.jpg";
+// MARS
+std::string mars_tex = path + "/resources/textures/mars_texture.jpg";
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -114,7 +118,7 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -139,15 +143,20 @@ int main() {
 
     // load models
 
+    Model spaceModel(sphere_obj);
+
     Model earthModel(sphere_obj);
     Model sunModel(sphere_obj);
     Model mercuryModel(sphere_obj);
     Model venusModel(sphere_obj);
+    Model marsModel(sphere_obj);
 
+    unsigned int spaceMap = loadTexture(space_tex.c_str());
     unsigned int sunMap = loadTexture(sun_tex.c_str());
     unsigned int mercuryMap = loadTexture(mercury_tex.c_str());
     unsigned int venusMap = loadTexture(venus_tex.c_str());
     unsigned int earthMap = loadTexture(earth_tex.c_str());
+    unsigned int marsMap = loadTexture(mars_tex.c_str());
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -169,6 +178,7 @@ int main() {
         // ------
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // set texture to background
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
@@ -176,59 +186,66 @@ int main() {
         // view/projection transformations
         glm::mat4 projection = glm::perspective(
             glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT,
-            5 * 0.1f, 5 * 100.0f);
+            5.0f, 50000.0f);
         // glm::mat4 projection = glm::perspective(
         //     105.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
-        // bind diffuse map
-        glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, sunMap);
-        // glBindTexture(GL_TEXTURE_2D, mercuryMap);
-        // glBindTexture(GL_TEXTURE_2D, venusMap);
-        glBindTexture(GL_TEXTURE_2D, earthMap);
-
         // render the loaded model
+        glm::mat4 matrixSpace = glm::mat4(1.0f);
         glm::mat4 matrixSun = glm::mat4(1.0f);
         glm::mat4 matrixMercury = glm::mat4(1.0f);
         glm::mat4 matrixVenus = glm::mat4(1.0f);
         glm::mat4 matrixEarth = glm::mat4(1.0f);
+        glm::mat4 matrixMars = glm::mat4(1.0f);
 
         // clang-format off
+        matrixSpace = glm::translate(matrixSpace, glm::vec3(0.0f, 0.0f, 0.0f));
         matrixSun =     glm::translate(matrixSun, glm::vec3(0.0f, 0.0f, 0.0f));
         matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -78.0f));
         matrixVenus =   glm::translate(matrixVenus, glm::vec3(0.0f, 0.0f, -144.0f));
         matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
+        matrixMars =    glm::translate(matrixMars, glm::vec3(0.0f, 0.0f, -304.0f));
 
-        matrixSun =     glm::scale(matrixSun, glm::vec3(109.0f));
-        matrixMercury = glm::scale(matrixMercury, glm::vec3(0.33f));
-        matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.96f));
-        matrixEarth =   glm::scale(matrixEarth, glm::vec3(1.0f));
-
-
-        // ourShader.setMat4("matrixSun", matrixSun);
-        // ourShader.setMat4("matrixMercury", matrixMercury);
-        // ourShader.setMat4("matrixVenus", matrixVenus);
-        ourShader.setMat4("model", matrixEarth);
-        // sunModel.Draw(ourShader);
-        // mercuryModel.Draw(ourShader);
-        // venusModel.Draw(ourShader);
-        earthModel.Draw(ourShader);
+        matrixSpace = glm::scale(matrixSpace, glm::vec3(500.0f, 500.0f, 500.0f));
+        matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
+        matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f));
+        matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
+        matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
+        matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
 
 
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+
+        // space
+        glBindTexture(GL_TEXTURE_2D, spaceMap);
+        ourShader.setInt("texture_diffuse1", 0);
+        ourShader.setMat4("model", matrixSpace);
+        spaceModel.Draw(ourShader);
+
+        // sun
         glBindTexture(GL_TEXTURE_2D, sunMap);
         ourShader.setMat4("model", matrixSun);
         sunModel.Draw(ourShader);
 
         glBindTexture(GL_TEXTURE_2D, mercuryMap);
         ourShader.setMat4("model", matrixMercury);
-        sunModel.Draw(ourShader);
+        mercuryModel.Draw(ourShader);
 
         glBindTexture(GL_TEXTURE_2D, venusMap);
         ourShader.setMat4("model", matrixVenus);
-        sunModel.Draw(ourShader);
+        venusModel.Draw(ourShader);
+
+        glBindTexture(GL_TEXTURE_2D, earthMap);
+        ourShader.setMat4("model", matrixEarth);
+        earthModel.Draw(ourShader);
+
+        glBindTexture(GL_TEXTURE_2D, marsMap);
+        ourShader.setMat4("model", matrixMars);
+        marsModel.Draw(ourShader);
 
         // clang-format on
 
