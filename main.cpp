@@ -213,7 +213,7 @@ int main() {
 
         matrixSpace = glm::scale(matrixSpace, glm::vec3(500.0f, 500.0f, 500.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
-        matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f));
+        matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f)); //0.033
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
         matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
@@ -240,9 +240,9 @@ int main() {
 
 
         float ambientStrength = 1.0f;
-        float diffuseStrength = 1.0f;
-        float specularStrength = 0.5f;
-        float shininessStrength = 32;
+        float diffuseStrength = 50.0f;
+        float specularStrength = 50.0f;
+        float shininessStrength = 64;
 
         lightingShader.use();
         glBindTexture(GL_TEXTURE_2D, mercuryMap);
@@ -251,8 +251,8 @@ int main() {
 
         // lightingShader.use();
         lightingShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
-        lightingShader.setVec3("lightColor", glm::vec3(0.0f, 0.0f, 0.0f));
-        lightingShader.setVec3("objectColor", glm::vec3(0.33f, 0.33f, 0.34f));
+        lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+        // lightingShader.setVec3("objectColor", glm::vec3(0.1f, 0.0f, 0.0f));
         lightingShader.setVec3("viewPos", camera.Position);
         lightingShader.setFloat("ambientStrength", ambientStrength);
         lightingShader.setFloat("diffuseStrength", diffuseStrength);
@@ -263,17 +263,17 @@ int main() {
         lightingShader.setMat4("model", matrixMercury);
         mercuryModel.Draw(lightingShader);
 
-        glBindTexture(GL_TEXTURE_2D, venusMap);
-        ourShader.setMat4("model", matrixVenus);
-        venusModel.Draw(ourShader);
+        // glBindTexture(GL_TEXTURE_2D, venusMap);
+        // ourShader.setMat4("model", matrixVenus);
+        // venusModel.Draw(ourShader);
 
-        glBindTexture(GL_TEXTURE_2D, earthMap);
-        ourShader.setMat4("model", matrixEarth);
-        earthModel.Draw(ourShader);
+        // glBindTexture(GL_TEXTURE_2D, earthMap);
+        // ourShader.setMat4("model", matrixEarth);
+        // earthModel.Draw(ourShader);
 
-        glBindTexture(GL_TEXTURE_2D, marsMap);
-        ourShader.setMat4("model", matrixMars);
-        marsModel.Draw(ourShader);
+        // glBindTexture(GL_TEXTURE_2D, marsMap);
+        // ourShader.setMat4("model", matrixMars);
+        // marsModel.Draw(ourShader);
 
         // clang-format on
 

@@ -8,7 +8,7 @@ in vec2 TexCoords;
   
 uniform vec3 lightPos; 
 uniform vec3 lightColor;
-uniform vec3 objectColor;
+// uniform vec3 objectColor;
 uniform vec3 viewPos;
 uniform float ambientStrength;
 uniform float diffuseStrength;
@@ -35,7 +35,8 @@ void main()
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininessStrength);
     vec3 specular = specularStrength * spec * lightColor;  
             
-    vec3 result = (ambient + diffuse + specular) * objectColor;
-    // FragColor = texture(result, TexCoords);
+    vec3 result = (ambient + diffuse + specular) * 0.05;
+    // FragColor = vec4(result, 1.0);
+    //FragColor = texture(texture_diffuse1, TexCoords) * vec4(result, 1.0);
     FragColor = texture(texture_diffuse1, TexCoords) * vec4(result, 1.0);
 } 
