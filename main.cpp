@@ -37,6 +37,10 @@ std::string earth_tex = path + "/resources/textures/earth_texture.jpg";
 // MARS
 std::string mars_tex = path + "/resources/textures/mars_texture.jpg";
 
+// rotation speed
+float rotation_mercury_itself = 0.0f;
+float rotation_mercury_sun = 0.0f;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -49,7 +53,7 @@ unsigned int loadTexture(char const* path) {
     int width, height, nrComponents;
     unsigned char* data = stbi_load(path, &width, &height, &nrComponents, 0);
     if (data) {
-        GLenum format;
+        GLenum format = 0;
         if (nrComponents == 1)
             format = GL_RED;
         else if (nrComponents == 3)
@@ -90,6 +94,25 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// Function to load planets with light
+void loadPlanetWithLight(float ambient, float diffuse, float specular,
+                         float shininess, Model planet, glm::mat4 view,
+                         glm::mat4 projection, glm::mat4 matrixPlanet,
+                         Shader lightingShader) {
+    lightingShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
+    lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    // lightingShader.setVec3("objectColor", glm::vec3(0.1f, 0.0f, 0.0f));
+    lightingShader.setVec3("viewPos", camera.Position);
+    lightingShader.setFloat("ambientStrength", ambient);
+    lightingShader.setFloat("diffuseStrength", diffuse);
+    lightingShader.setFloat("specularStrength", specular);
+    lightingShader.setFloat("shininessStrength", shininess);
+    lightingShader.setMat4("projection", projection);
+    lightingShader.setMat4("view", view);
+    lightingShader.setMat4("model", matrixPlanet);
+    planet.Draw(lightingShader);
+}
 
 int main() {
     // glfw: initialize and configure
@@ -163,6 +186,9 @@ int main() {
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+    glm::vec3 mercuryPos = glm::vec3(0.0f, 0.0f, -78.0f);
+    tuple<int, int, int> mercuryRotation(0.0f, 0.5f, 0.0f);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -207,6 +233,16 @@ int main() {
         matrixSpace = glm::translate(matrixSpace, glm::vec3(0.0f, 0.0f, 0.0f));
         matrixSun =     glm::translate(matrixSun, glm::vec3(0.0f, 0.0f, 0.0f));
         matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -78.0f));
+        // rotation over itself
+        matrixMercury = glm::rotate(matrixMercury, rotation_mercury_itself, glm::vec3(0.0f, 0.5f, 0.0f));
+        rotation_mercury_itself += 0.0001f;
+        // rotation around the origin (sun)
+        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, 78.0f));
+        matrixMercury = glm::rotate(matrixMercury, rotation_mercury_sun, glm::vec3(0.0f, 0.5f, 0.0f));   
+        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -78.0f));
+        rotation_mercury_sun += 0.00001f;
+
+
         matrixVenus =   glm::translate(matrixVenus, glm::vec3(0.0f, 0.0f, -144.0f));
         matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
         matrixMars =    glm::translate(matrixMars, glm::vec3(0.0f, 0.0f, -304.0f));
@@ -217,6 +253,9 @@ int main() {
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
         matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
+
+
+        // matrixMercury = glm::translate(matrixMercury, mercuryPos);
 
 
         // bind diffuse map
@@ -241,39 +280,38 @@ int main() {
 
         float ambientStrength = 1.0f;
         float diffuseStrength = 50.0f;
-        float specularStrength = 50.0f;
+        float specularStrength = 25.0f;
         float shininessStrength = 64;
 
+        // rotation with sen and cos
+        // mercuryPos[0] += cos(get<0>(mercuryRotation));
+        // get<0>(mercuryRotation) += 0.01;
+        // mercuryPos[1] += cos(get<1>(mercuryRotation));
+        // get<1>(mercuryRotation) += 0.01;
+        // mercuryPos[2] += cos(get<2>(mercuryRotation));
+        // get<2>(mercuryRotation) += 0.01;
+        // // overflow angle
+        // if (get<0>(mercuryRotation) > 360.0f) get<0>(mercuryRotation) = 0.0f;
+        // if (get<1>(mercuryRotation) > 360.0f) get<1>(mercuryRotation) = 0.0f;
+        // if (get<2>(mercuryRotation) > 360.0f) get<2>(mercuryRotation) = 0.0f;
+
+        
         lightingShader.use();
         glBindTexture(GL_TEXTURE_2D, mercuryMap);
-        // ourShader.setMat4("model", matrixMercury);
-        // mercuryModel.Draw(ourShader);
+        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, mercuryModel, view, projection, matrixMercury, lightingShader);
+        // rotation around sun
 
-        // lightingShader.use();
-        lightingShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
-        lightingShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-        // lightingShader.setVec3("objectColor", glm::vec3(0.1f, 0.0f, 0.0f));
-        lightingShader.setVec3("viewPos", camera.Position);
-        lightingShader.setFloat("ambientStrength", ambientStrength);
-        lightingShader.setFloat("diffuseStrength", diffuseStrength);
-        lightingShader.setFloat("specularStrength", specularStrength);
-        lightingShader.setFloat("shininessStrength", shininessStrength);
-        lightingShader.setMat4("projection", projection);
-        lightingShader.setMat4("view", view);
-        lightingShader.setMat4("model", matrixMercury);
-        mercuryModel.Draw(lightingShader);
 
-        // glBindTexture(GL_TEXTURE_2D, venusMap);
-        // ourShader.setMat4("model", matrixVenus);
-        // venusModel.Draw(ourShader);
+        glBindTexture(GL_TEXTURE_2D, venusMap);
+        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, venusModel, view, projection, matrixVenus, lightingShader);
 
-        // glBindTexture(GL_TEXTURE_2D, earthMap);
-        // ourShader.setMat4("model", matrixEarth);
-        // earthModel.Draw(ourShader);
 
-        // glBindTexture(GL_TEXTURE_2D, marsMap);
-        // ourShader.setMat4("model", matrixMars);
-        // marsModel.Draw(ourShader);
+        glBindTexture(GL_TEXTURE_2D, earthMap);
+        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, earthModel, view, projection, matrixEarth, lightingShader);
+
+
+        glBindTexture(GL_TEXTURE_2D, marsMap);
+        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, marsModel, view, projection, matrixMars, lightingShader);
 
         // clang-format on
 
