@@ -37,14 +37,36 @@ std::string earth_tex = path + "/resources/textures/earth_texture.jpg";
 // MARS
 std::string mars_tex = path + "/resources/textures/mars_texture.jpg";
 
-// rotation speed
-float rotation_mercury_itself = 0.0f;
-float rotation_mercury_sun = 0.0f;
-
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+
+float sun_mercury_distance = -78.0f;
+float r_mercury_itself = 0.0f;
+float r_mercury_sun = 0.0f;
+float r_mercury_itself_rate = 0.001;
+float r_mercury_sun_rate = 0.001;
+
+// TODO: 60s = 1 rotation = 1 day
+
+float sun_venus_distance = -144.0f;
+float r_venus_itself = 0.0f;
+float r_venus_sun = 0.0f;
+float r_venus_itself_rate = 0.001;
+float r_venus_sun_rate = 0.001;
+
+float sun_earth_distance = -200.0f;
+float r_earth_itself = 0.0f;
+float r_earth_sun = 0.0f;
+float r_earth_itself_rate = 0.001;
+float r_earth_sun_rate = 0.001;
+
+float sun_mars_distance = -304.0f;
+float r_mars_itself = 0.0f;
+float r_mars_sun = 0.0f;
+float r_mars_itself_rate = 0.001;
+float r_mars_sun_rate = 0.001;
 
 unsigned int loadTexture(char const* path) {
     unsigned int textureID;
@@ -112,6 +134,25 @@ void loadPlanetWithLight(float ambient, float diffuse, float specular,
     lightingShader.setMat4("view", view);
     lightingShader.setMat4("model", matrixPlanet);
     planet.Draw(lightingShader);
+}
+
+// Function to rotate planet around sun
+void planetRotationSun(float* rotationSun, float rateSun, float distanceSun,
+                       glm::mat4* planet) {
+    // rotate planet over the sun
+    *planet = glm::translate(*planet, glm::vec3(0.0f, 0.0f, abs(distanceSun)));
+    *planet = glm::rotate(*planet, *rotationSun, glm::vec3(0.0f, 0.5f, 0.0f));
+    *planet = glm::translate(*planet, glm::vec3(0.0f, 0.0f, distanceSun));
+    *rotationSun += rateSun;
+}
+
+// Function to rotate planet around itself
+void planetRotationItself(float* rotationItself, float rateItself,
+                          glm::mat4* planet) {
+    // *rotationItself += rateItself;
+    *planet =
+        glm::rotate(*planet, *rotationItself, glm::vec3(0.0f, 0.5f, 0.0f));
+    *rotationItself += rateItself;
 }
 
 int main() {
@@ -186,9 +227,6 @@ int main() {
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glm::vec3 mercuryPos = glm::vec3(0.0f, 0.0f, -78.0f);
-    tuple<int, int, int> mercuryRotation(0.0f, 0.5f, 0.0f);
-
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window)) {
@@ -230,22 +268,31 @@ int main() {
         glm::mat4 matrixMars = glm::mat4(1.0f);
 
         // clang-format off
+        // Space
         matrixSpace = glm::translate(matrixSpace, glm::vec3(0.0f, 0.0f, 0.0f));
+
+        // Sum
         matrixSun =     glm::translate(matrixSun, glm::vec3(0.0f, 0.0f, 0.0f));
-        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -78.0f));
-        // rotation over itself
-        matrixMercury = glm::rotate(matrixMercury, rotation_mercury_itself, glm::vec3(0.0f, 0.5f, 0.0f));
-        rotation_mercury_itself += 0.0001f;
-        // rotation around the origin (sun)
-        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, 78.0f));
-        matrixMercury = glm::rotate(matrixMercury, rotation_mercury_sun, glm::vec3(0.0f, 0.5f, 0.0f));   
-        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -78.0f));
-        rotation_mercury_sun += 0.00001f;
 
+        // Mercury
+        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, sun_mercury_distance));
+        planetRotationSun(&r_mercury_sun, r_mercury_sun_rate, sun_mercury_distance, &matrixMercury);
+        planetRotationItself(&r_mercury_itself, r_mercury_itself_rate, &matrixMercury);
 
+        // Venus
         matrixVenus =   glm::translate(matrixVenus, glm::vec3(0.0f, 0.0f, -144.0f));
+        planetRotationSun(&r_venus_sun, r_venus_sun_rate, sun_venus_distance, &matrixVenus);
+        planetRotationItself(&r_venus_itself, r_venus_itself_rate, &matrixVenus);
+
+        // Earth
         matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
+        planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
+        planetRotationItself(&r_earth_itself, r_earth_itself_rate, &matrixEarth);
+
+        // Mars
         matrixMars =    glm::translate(matrixMars, glm::vec3(0.0f, 0.0f, -304.0f));
+        planetRotationSun(&r_mars_sun, r_mars_sun_rate, sun_mars_distance, &matrixMars);
+        planetRotationItself(&r_mars_itself, r_mars_itself_rate, &matrixMars);
 
         matrixSpace = glm::scale(matrixSpace, glm::vec3(500.0f, 500.0f, 500.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
@@ -253,9 +300,6 @@ int main() {
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
         matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
-
-
-        // matrixMercury = glm::translate(matrixMercury, mercuryPos);
 
 
         // bind diffuse map
@@ -282,18 +326,6 @@ int main() {
         float diffuseStrength = 50.0f;
         float specularStrength = 25.0f;
         float shininessStrength = 64;
-
-        // rotation with sen and cos
-        // mercuryPos[0] += cos(get<0>(mercuryRotation));
-        // get<0>(mercuryRotation) += 0.01;
-        // mercuryPos[1] += cos(get<1>(mercuryRotation));
-        // get<1>(mercuryRotation) += 0.01;
-        // mercuryPos[2] += cos(get<2>(mercuryRotation));
-        // get<2>(mercuryRotation) += 0.01;
-        // // overflow angle
-        // if (get<0>(mercuryRotation) > 360.0f) get<0>(mercuryRotation) = 0.0f;
-        // if (get<1>(mercuryRotation) > 360.0f) get<1>(mercuryRotation) = 0.0f;
-        // if (get<2>(mercuryRotation) > 360.0f) get<2>(mercuryRotation) = 0.0f;
 
         
         lightingShader.use();
