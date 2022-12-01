@@ -140,6 +140,8 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader ourShader("model_loading.vs", "model_loading.fs");
+    Shader lightingShader("lighting.vs", "lighting.fs");
+    Shader sunlightShader("sunlight.vs", "sunlight.fs");
 
     // load models
 
@@ -186,7 +188,7 @@ int main() {
         // view/projection transformations
         glm::mat4 projection = glm::perspective(
             glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT,
-            5.0f, 50000.0f);
+            0.5f, 50000.0f);
         // glm::mat4 projection = glm::perspective(
         //     105.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -222,18 +224,44 @@ int main() {
 
         // space
         glBindTexture(GL_TEXTURE_2D, spaceMap);
-        ourShader.setInt("texture_diffuse1", 0);
         ourShader.setMat4("model", matrixSpace);
         spaceModel.Draw(ourShader);
 
         // sun
+        sunlightShader.use();
         glBindTexture(GL_TEXTURE_2D, sunMap);
-        ourShader.setMat4("model", matrixSun);
-        sunModel.Draw(ourShader);
+        // ourShader.setMat4("model", matrixSun);
+        // sunModel.Draw(ourShader);
+        
+        sunlightShader.setMat4("projection", projection);
+        sunlightShader.setMat4("view", view);
+        sunlightShader.setMat4("model", matrixSun);
+        sunModel.Draw(sunlightShader);
 
+
+        float ambientStrength = 1.0f;
+        float diffuseStrength = 1.0f;
+        float specularStrength = 0.5f;
+        float shininessStrength = 32;
+
+        lightingShader.use();
         glBindTexture(GL_TEXTURE_2D, mercuryMap);
-        ourShader.setMat4("model", matrixMercury);
-        mercuryModel.Draw(ourShader);
+        // ourShader.setMat4("model", matrixMercury);
+        // mercuryModel.Draw(ourShader);
+
+        // lightingShader.use();
+        lightingShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
+        lightingShader.setVec3("lightColor", glm::vec3(0.0f, 0.0f, 0.0f));
+        lightingShader.setVec3("objectColor", glm::vec3(0.33f, 0.33f, 0.34f));
+        lightingShader.setVec3("viewPos", camera.Position);
+        lightingShader.setFloat("ambientStrength", ambientStrength);
+        lightingShader.setFloat("diffuseStrength", diffuseStrength);
+        lightingShader.setFloat("specularStrength", specularStrength);
+        lightingShader.setFloat("shininessStrength", shininessStrength);
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
+        lightingShader.setMat4("model", matrixMercury);
+        mercuryModel.Draw(lightingShader);
 
         glBindTexture(GL_TEXTURE_2D, venusMap);
         ourShader.setMat4("model", matrixVenus);
