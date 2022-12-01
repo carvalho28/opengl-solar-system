@@ -1,6 +1,6 @@
 # Blender v3.3.1 OBJ File: 'test.blend'
 # www.blender.org
-mtllib earth.mtl
+mtllib sphere.mtl
 o Surface_Sphere
 v 0.000000 0.189697 -0.461942
 v 0.000000 0.000000 -0.500003

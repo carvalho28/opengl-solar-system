@@ -22,18 +22,16 @@
 
 // PATHS
 std::string path = std::filesystem::current_path();
+// SPHERE
+std::string sphere_obj = path + "/resources/models/sphere/shpere.obj";
 // SUN
-std::string sun_obj = path + "/resources/sun/sun.obj";
-std::string sun_tex = path + "/resources/sun/sun_texture.jpg";
+std::string sun_tex = path + "/resources/textures/sun_texture.jpg";
 // MERCURY
-std::string mercury_obj = path + "/resources/mercury/mercury.obj";
-std::string mercury_tex = path + "/resources/mercury/mercury_texture.jpg";
+std::string mercury_tex = path + "/resources/textures/mercury_texture.jpg";
 // VENUS
-std::string venus_obj = path + "/resources/venus/venus.obj";
-std::string venus_tex = path + "/resources/venus/venus_texture.jpg";
+std::string venus_tex = path + "/resources/textures/venus_texture.jpg";
 // EARTH
-std::string earth_obj = path + "/resources/earth/earth.obj";
-std::string earth_tex = path + "/resources/earth/earth_texture.jpg";
+std::string earth_tex = path + "/resources/textures/earth_texture.jpg";
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -116,7 +114,7 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -141,10 +139,10 @@ int main() {
 
     // load models
 
-    Model earthModel(earth_obj);
-    Model sunModel(sun_obj);
-    Model mercuryModel(mercury_obj);
-    Model venusModel(venus_obj);
+    Model earthModel(sphere_obj);
+    Model sunModel(sphere_obj);
+    Model mercuryModel(sphere_obj);
+    Model venusModel(sphere_obj);
 
     unsigned int sunMap = loadTexture(sun_tex.c_str());
     unsigned int mercuryMap = loadTexture(mercury_tex.c_str());
@@ -153,8 +151,6 @@ int main() {
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // glm::frustum(-1, 1, -1, 1, 1, 100);
 
     // render loop
     // -----------
@@ -202,13 +198,13 @@ int main() {
 
         // clang-format off
         matrixSun =     glm::translate(matrixSun, glm::vec3(0.0f, 0.0f, 0.0f));
-        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -39.0f));
-        matrixVenus =   glm::translate(matrixVenus, glm::vec3(0.0f, 0.0f, -72.0f));
-        matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -100.0f));
+        matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, -78.0f));
+        matrixVenus =   glm::translate(matrixVenus, glm::vec3(0.0f, 0.0f, -144.0f));
+        matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
 
-        matrixSun =     glm::scale(matrixSun, glm::vec3(10.0f));
-        matrixMercury = glm::scale(matrixMercury, glm::vec3(0.4f));
-        matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.95f));
+        matrixSun =     glm::scale(matrixSun, glm::vec3(109.0f));
+        matrixMercury = glm::scale(matrixMercury, glm::vec3(0.33f));
+        matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.96f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(1.0f));
 
 
