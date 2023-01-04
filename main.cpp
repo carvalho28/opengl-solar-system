@@ -22,20 +22,28 @@
 
 // PATHS
 std::string path = std::filesystem::current_path();
-// SPHERE
+
+// MODELS
+// --SPHERE
 std::string sphere_obj = path + "/resources/models/sphere/shpere.obj";
-// BACKGROUND
+// --ASTEROID
+std::string asteroid_obj = path + "/resources/models/asteroid/asteroid.obj";
+
+// TEXTURES
+// --SKYBOX
 std::string space_tex = path + "/resources/textures/space_texture.jpg";
-// SUN
+// --SUN
 std::string sun_tex = path + "/resources/textures/sun_texture.jpg";
-// MERCURY
+// --MERCURY
 std::string mercury_tex = path + "/resources/textures/mercury_texture.jpg";
-// VENUS
+// --VENUS
 std::string venus_tex = path + "/resources/textures/venus_texture.jpg";
-// EARTH
+// --EARTH
 std::string earth_tex = path + "/resources/textures/earth_texture.jpg";
-// MARS
+// --MARS
 std::string mars_tex = path + "/resources/textures/mars_texture.jpg";
+// --ASTEROID
+std::string asteroid_tex = path + "/resources/textures/asteroid_texture.jpg";
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -151,7 +159,7 @@ void planetRotationItself(float* rotationItself, float rateItself,
                           glm::mat4* planet) {
     // *rotationItself += rateItself;
     *planet =
-        glm::rotate(*planet, *rotationItself, glm::vec3(0.0f, 0.5f, 0.0f));
+        glm::rotate(*planet, *rotationItself, glm::vec3(0.0f, 0.5f, 0.0f)); // is this hardcoded??
     *rotationItself += rateItself;
 }
 
@@ -206,6 +214,7 @@ int main() {
     Shader ourShader("model_loading.vs", "model_loading.fs");
     Shader lightingShader("lighting.vs", "lighting.fs");
     Shader sunlightShader("sunlight.vs", "sunlight.fs");
+    Shader asteroidShader("asteroid.vs", "asteroid.fs");
 
     // load models
 
@@ -216,6 +225,7 @@ int main() {
     Model mercuryModel(sphere_obj);
     Model venusModel(sphere_obj);
     Model marsModel(sphere_obj);
+    Model asteroidModel(asteroid_obj);
 
     unsigned int spaceMap = loadTexture(space_tex.c_str());
     unsigned int sunMap = loadTexture(sun_tex.c_str());
@@ -223,6 +233,7 @@ int main() {
     unsigned int venusMap = loadTexture(venus_tex.c_str());
     unsigned int earthMap = loadTexture(earth_tex.c_str());
     unsigned int marsMap = loadTexture(mars_tex.c_str());
+    unsigned int asteroidMap = loadTexture(asteroid_tex.c_str());
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
