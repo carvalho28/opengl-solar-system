@@ -56,8 +56,7 @@ std::string uranus_tex = path + "/resources/textures/uranus_texture.jpg";
 std::string neptune_tex = path + "/resources/textures/neptune_texture.jpg";
 
 // VARS
-static int amountOfAsteroids = 100;
-float distanceBetweenElements;
+static int amountOfAsteroids = 1000;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -93,7 +92,7 @@ float earth_moon_distance = -50.0f;
 float r_moon_itself = 0.0f;
 float r_moon_earth = 0.0f;
 float r_moon_itself_rate = 0.001;
-float r_moon_earth_rate = 0.001;
+float r_moon_earth_rate = 0.05;
 
 // Mars
 float sun_mars_distance = -304.0f;
@@ -304,6 +303,7 @@ int main() {
     Model saturnModel(sphere_obj);
     Model uranusModel(sphere_obj);
     Model neptuneModel(sphere_obj);
+    Model moonModel(sphere_obj);
 
     // Model asteroidModel(asteroid_obj);
     Model asteroidModels[amountOfAsteroids];
@@ -387,9 +387,6 @@ int main() {
         // Satellites
         glm::mat4 matrixMoon = glm::mat4(1.0f);
 
-        // glm::mat4[amount] matrixAsteroid;
-        // array
-
         glm::mat4 matrixAsteroids[amountOfAsteroids];
         // Asteroids
         for (int i = 0; i < amountOfAsteroids; i++) {
@@ -415,13 +412,14 @@ int main() {
 
         // Earth
         matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
-        planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
+        // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
         planetRotationItself(&r_earth_itself, r_earth_itself_rate, &matrixEarth);
         // Moon
-        // matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -230.0f));
+        matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -210.0f));
         // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixMoon);
-        // planetRotationItself(&r_moon_itself, r_moon_itself_rate, &matrixMoon);
-        // satelliteAroundPlanet(rotation)
+        planetRotationItself(&r_moon_itself, r_moon_itself_rate, &matrixMoon);
+        satelliteAroundPlanet(&r_moon_earth, r_moon_earth_rate, earth_moon_distance,
+        &matrixEarth, &matrixMoon);
         
 
         // Mars
@@ -450,15 +448,13 @@ int main() {
         planetRotationItself(&r_neptune_itself, r_neptune_itself_rate, &matrixNeptune);
         
         srand(static_cast<unsigned int>(glfwGetTime())); // initialize random seed
-        float radius = 50.0;
+        float radius = 400.0f; // default is 50.0
         float offset = 2.5f;
+
         // Asteroids
-        distanceBetweenElements = -70.0f;
         for (int i = 0; i < amountOfAsteroids; i++) {
-            matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(0.0f, 0.0f, -distanceBetweenElements));
-            distanceBetweenElements -= 10.0f;
-            cout << "Distance between elements: " << distanceBetweenElements << endl;
-            // MAKE RANDOM TRANSFORMATIONS
+            matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(0.0f, 0.0f, 0.0f));
+            // matrixAsteroids[i] = glm::scale(matrixAsteroids[i], glm::vec3(3.0f, 3.0f, 3.0f));
             float angle = (float)i / (float)amountOfAsteroids * 360.0f;
             float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
             float x = sin(angle) * radius + displacement;
@@ -470,7 +466,7 @@ int main() {
             matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(x, y, z));
 
             // 2. scale: Scale between 0.05 and 0.25f
-            float scale = static_cast<float>((rand() % 20) / 100.0 + 0.05);
+            float scale = static_cast<float>((rand() % 50) / 100.0 + 0.25);
             matrixAsteroids[i] = glm::scale(matrixAsteroids[i], glm::vec3(scale));
 
             // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
@@ -479,7 +475,7 @@ int main() {
         
         }
 
-        matrixSpace = glm::scale(matrixSpace, glm::vec3(5000.0f, 5000.0f, 5000.0f));
+        matrixSpace = glm::scale(matrixSpace, glm::vec3(50000.0f, 50000.0f, 50000.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
         matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f)); //0.033
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
@@ -489,6 +485,8 @@ int main() {
         matrixSaturn =  glm::scale(matrixSaturn, glm::vec3(0.4f));
         matrixUranus =  glm::scale(matrixUranus, glm::vec3(0.3f));
         matrixNeptune = glm::scale(matrixNeptune, glm::vec3(0.3f));
+
+        matrixMoon = glm::scale(matrixMoon, glm::vec3(0.05f));
 
 
         // bind diffuse map
@@ -549,6 +547,10 @@ int main() {
             glBindTexture(GL_TEXTURE_2D, asteroidMap);
             loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, asteroidModels[i], view, projection, matrixAsteroids[i], lightingShader);
         }
+
+        // Moon
+        glBindTexture(GL_TEXTURE_2D, moonMap);
+        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, moonModel, view, projection, matrixMoon, lightingShader);
 
         // clang-format on
 
