@@ -1,4 +1,4 @@
-# Blender MTL File: 'Rock1.blend'
+# Blender MTL File: 'Asteroid.blend'
 # Material Count: 1
 
 newmtl Material
@@ -9,4 +9,3 @@ Ks 0.007937 0.007937 0.007937
 Ni 1.000000
 d 1.000000
 illum 2
-map_Bump rock.png

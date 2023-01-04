@@ -1,6 +1,6 @@
-# Blender v2.71 (sub 0) OBJ File: 'Rock1.blend'
+# Blender v2.71 (sub 0) OBJ File: 'Asteroid.blend'
 # www.blender.org
-mtllib rock.mtl
+mtllib asteroid.mtl
 o Cube
 v 0.896930 -0.116701 -1.078061
 v 0.736314 -0.076033 1.066762
