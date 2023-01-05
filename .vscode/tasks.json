@@ -30,7 +30,8 @@
         "CoreVideo",
         "-framework",
         "CoreFoundation",
-        "-Wno-deprecated"
+        "-Wno-deprecated",
+        "-lfreetype"
       ],
       "options": {
         "cwd": "${fileDirname}"

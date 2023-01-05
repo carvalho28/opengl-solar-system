@@ -44,7 +44,7 @@ class Camera {
           MovementSpeed(SPEED),
           MouseSensitivity(SENSITIVITY),
           Zoom(ZOOM) {
-        Position = position;
+        Position = glm::vec3(-150.0f, 200.0f, 200.0f);
         WorldUp = up;
         Yaw = yaw;
         Pitch = pitch;

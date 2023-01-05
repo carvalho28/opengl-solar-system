@@ -28,8 +28,6 @@ struct Character {
     unsigned int Advance;    // Horizontal offset to advance to next glyph
 };
 
-// clang-format on
-
 // PATHS
 std::string path = std::filesystem::current_path();
 
@@ -67,7 +65,7 @@ std::string neptune_tex = path + "/resources/textures/neptune_texture.jpg";
 
 // FONTS
 // --ARIAL
-std::string arial_font = path + "/resources/fonts/arial.ttf";
+std::string arial_font = path + "/resources/fonts/Poppins-Regular.ttf";
 
 // VARS
 static int amountOfAsteroids = 1000;
@@ -76,9 +74,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+void RenderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
 
 std::map<GLchar, Character> Characters;
-unsigned int VAO, VBO;
+unsigned int tqVAO, tqVBO;  // Texture quads
 
 // TODO: 60s = 1 rotation = 1 day
 
@@ -104,8 +103,8 @@ float r_earth_itself_rate = 0.001;
 float r_earth_sun_rate = 0.001;
 
 // Moon
-float sun_moon_distance = -230.0f;
-float earth_moon_distance = -50.0f;
+float sun_moon_distance = -200.0f;
+float earth_moon_distance = -10.0f;
 float r_moon_itself = 0.0f;
 float r_moon_earth = 0.0f;
 float r_moon_itself_rate = 0.001;
@@ -202,6 +201,19 @@ unsigned int loadFont() {
         // destroy FreeType once we're finished
         FT_Done_Face(face);
         FT_Done_FreeType(ft);
+
+        // configure tqVAO/tqVBO for texture quads
+        // -----------------------------------
+        glGenVertexArrays(1, &tqVAO);
+        glGenBuffers(1, &tqVBO);
+        glBindVertexArray(tqVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, tqVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL,
+                     GL_DYNAMIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
     }
 }
 
@@ -300,24 +312,13 @@ void satelliteAroundPlanet(float* rotationPlanet,
                            float distanceToPlanet, 
                            glm::mat4* planet,
                            glm::mat4* satellite) {
-    float satelliteX = ((distanceToPlanet) * cos(*rotationPlanet)) /2 ;
-    float satelliteZ = ((distanceToPlanet) * sin(*rotationPlanet)) /2 ;
-
-    // rotate satellite around planet
+    float satelliteX = ((distanceToPlanet) * cos((*rotationPlanet)));
+    float satelliteZ = ((distanceToPlanet) * sin((*rotationPlanet)));
     // clang-format off
 
-
      *satellite = glm::translate(*satellite,
-                                glm::vec3(satelliteX, 0.0f, satelliteZ));
-    // *satellite =
-    //     glm::rotate(*satellite, *rotationPlanet, glm::vec3(0.0f, 0.05f, 23.5f));
-    // *satellite =
-    //     glm::translate(*satellite, glm::vec3(0.0f, 0.0f, distanceToPlanet));
+                                glm::vec3(satelliteZ, 0.0f, satelliteX));
     *rotationPlanet += rateAroundPlanet;
-    
-    // glm::mat4 satelliteTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(satelliteX, 0, satelliteZ));
-
-    // *satellite = (*planet) * glm::rotate(*satellite, glm::radians(*rotationPlanet), glm::vec3(0, 1, 0)) * satelliteTranslation;
 }
 
 int main() {
@@ -372,10 +373,11 @@ int main() {
     Shader lightingShader("lighting.vs", "lighting.fs");
     Shader sunlightShader("sunlight.vs", "sunlight.fs");
     Shader asteroidShader("asteroid.vs", "asteroid.fs");
+    Shader textShader("text.vs", "text.fs");
 
     // load models
 
-    Model spaceModel(sphere_obj);
+    Model spaceModel(sphere_obj); // skybox sphere
 
     Model earthModel(sphere_obj);
     Model sunModel(sphere_obj);
@@ -411,6 +413,8 @@ int main() {
     // Satellites
     unsigned int moonMap = loadTexture(moon_tex.c_str());
 
+    glm::mat4 projection_text = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
+
     cout << "Here 1\n";
 
     // draw in wireframe
@@ -435,13 +439,25 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // set texture to background
 
+        //glEnable(GL_CULL_FACE);
+        //glEnable(GL_BLEND);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        loadFont();
+
+        //glm::mat4 projection_text = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
+        textShader.use();
+        RenderText(textShader, "nao consigo editar", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+        RenderText(textShader, "(C) Ana Cacho Paulo Lda.", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+        glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection_text));
+
         // don't forget to enable shader before setting uniforms
         ourShader.use();
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(
             glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT,
-            0.5f, 50000.0f);
+            0.5f, 5000.0f);
         // glm::mat4 projection = glm::perspective(
         //     105.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -498,7 +514,7 @@ int main() {
         // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
         planetRotationItself(&r_earth_itself, r_earth_itself_rate, &matrixEarth);
         // Moon
-        matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -210.0f));
+        matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -200.0f));
         // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixMoon);
         satelliteAroundPlanet(&r_moon_earth, r_moon_earth_rate, earth_moon_distance,
         &matrixEarth, &matrixMoon);
@@ -557,7 +573,7 @@ int main() {
         
         }
 
-        matrixSpace = glm::scale(matrixSpace, glm::vec3(50000.0f, 50000.0f, 50000.0f));
+        matrixSpace = glm::scale(matrixSpace, glm::vec3(50.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
         matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f)); //0.033
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
@@ -568,7 +584,7 @@ int main() {
         matrixUranus =  glm::scale(matrixUranus, glm::vec3(0.3f));
         matrixNeptune = glm::scale(matrixNeptune, glm::vec3(0.3f));
 
-        matrixMoon = glm::scale(matrixMoon, glm::vec3(0.05f));
+        matrixMoon = glm::scale(matrixMoon, glm::vec3(0.025f));
 
 
         // bind diffuse map
@@ -590,25 +606,21 @@ int main() {
         sunlightShader.setMat4("model", matrixSun);
         sunModel.Draw(sunlightShader);
 
-        float ambientStrength = 1.0f;
-        float diffuseStrength = 50.0f;
-        float specularStrength = 25.0f;
-        float shininessStrength = 64;
+        float ambientStrength = 3.0f;
+        float diffuseStrength = 15.0f;
+        float specularStrength = 4.0f;
+        float shininessStrength = 4;
 
         
         lightingShader.use();
         glBindTexture(GL_TEXTURE_2D, mercuryMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, mercuryModel, view, projection, matrixMercury, lightingShader);
-        // rotation around sun
-
 
         glBindTexture(GL_TEXTURE_2D, venusMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, venusModel, view, projection, matrixVenus, lightingShader);
 
-
         glBindTexture(GL_TEXTURE_2D, earthMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, earthModel, view, projection, matrixEarth, lightingShader);
-
 
         glBindTexture(GL_TEXTURE_2D, marsMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, marsModel, view, projection, matrixMars, lightingShader);
@@ -702,4 +714,52 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+// Text rendering
+void RenderText(Shader& shader, std::string text, float x, float y, float scale,
+                glm::vec3 color) {
+    // activate corresponding render state
+    shader.use();
+    glUniform3f(glGetUniformLocation(shader.ID, "textColor"), color.x, color.y,
+                color.z);
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(tqVAO);
+
+    // iterate through all characters
+    std::string::const_iterator c;
+    for (c = text.begin(); c != text.end(); c++) {
+        Character ch = Characters[*c];
+
+        float xpos = x + ch.Bearing.x * scale;
+        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale;
+
+        float w = ch.Size.x * scale;
+        float h = ch.Size.y * scale;
+        // update VBO for each character
+        float vertices[6][4] = {
+            {xpos, ypos + h, 0.0f, 0.0f},    {xpos, ypos, 0.0f, 1.0f},
+            {xpos + w, ypos, 1.0f, 1.0f},
+
+            {xpos, ypos + h, 0.0f, 0.0f},    {xpos + w, ypos, 1.0f, 1.0f},
+            {xpos + w, ypos + h, 1.0f, 0.0f}};
+        // render glyph texture over quad
+        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+        // update content of VBO memory
+        glBindBuffer(GL_ARRAY_BUFFER, tqVBO);
+        glBufferSubData(
+            GL_ARRAY_BUFFER, 0, sizeof(vertices),
+            vertices);  // be sure to use glBufferSubData and not glBufferData
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // render quad
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // now advance cursors for next glyph (note that advance is number of
+        // 1/64 pixels)
+        x += (ch.Advance >> 6) *
+             scale;  // bitshift by 6 to get value in pixels (2^6 = 64 (divide
+                     // amount of 1/64th pixels by 64 to get amount of pixels))
+    }
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
