@@ -18,6 +18,16 @@
 
 #include <filesystem>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+struct Character {
+    unsigned int TextureID;  // ID handle of the glyph texture
+    glm::ivec2 Size;         // Size of glyph
+    glm::ivec2 Bearing;      // Offset from baseline to left/top of glyph
+    unsigned int Advance;    // Horizontal offset to advance to next glyph
+};
+
 // clang-format on
 
 // PATHS
@@ -55,6 +65,10 @@ std::string uranus_tex = path + "/resources/textures/uranus_texture.jpg";
 // --NEPTUNE
 std::string neptune_tex = path + "/resources/textures/neptune_texture.jpg";
 
+// FONTS
+// --ARIAL
+std::string arial_font = path + "/resources/fonts/arial.ttf";
+
 // VARS
 static int amountOfAsteroids = 1000;
 
@@ -62,6 +76,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+
+std::map<GLchar, Character> Characters;
+unsigned int VAO, VBO;
 
 // TODO: 60s = 1 rotation = 1 day
 
@@ -128,6 +145,65 @@ float r_neptune_itself = 0.0f;
 float r_neptune_sun = 0.0f;
 float r_neptune_itself_rate = 0.001;
 float r_neptune_sun_rate = 0.001;
+
+unsigned int loadFont() {
+    FT_Library ft;
+    if (FT_Init_FreeType(&ft)) {
+        std::cout << "ERROR::FREETYPE: Could not init FreeType Library"
+                  << std::endl;
+        return -1;
+    }
+
+    if (arial_font.empty()) {
+        std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+        return -1;
+    }
+    FT_Face face;
+    if (FT_New_Face(ft, arial_font.c_str(), 0, &face)) {
+        std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
+        return -1;
+    } else {
+        // set size to load glyphs as
+        FT_Set_Pixel_Sizes(face, 0, 48);
+
+        // disable byte-alignment restriction
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        // load first 128 characters of ASCII set
+        for (unsigned char c = 0; c < 128; c++) {
+            // Load character glyph
+            if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+                std::cout << "ERROR::FREETYTPE: Failed to load Glyph"
+                          << std::endl;
+                continue;
+            }
+            // generate texture
+            unsigned int texture;
+            glGenTextures(1, &texture);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width,
+                         face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE,
+                         face->glyph->bitmap.buffer);
+            // set texture options
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            // now store character for later use
+            Character character = {
+                texture,
+                glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+                glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+                static_cast<unsigned int>(face->glyph->advance.x)};
+            Characters.insert(std::pair<char, Character>(c, character));
+        }
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // destroy FreeType once we're finished
+        FT_Done_Face(face);
+        FT_Done_FreeType(ft);
+    }
+}
 
 unsigned int loadTexture(char const* path) {
     std::cout << "Path no loadTexture : " << path << "\n";
@@ -218,23 +294,30 @@ void planetRotationItself(float* rotationItself, float rateItself,
 }
 
 // Function to rotate satellite around planet
-void satelliteAroundPlanet(float* rotationPlanet, float rateAroundPlanet,
-                           float distanceToPlanet, glm::mat4* planet,
+// clang-format off
+void satelliteAroundPlanet(float* rotationPlanet, 
+                           float rateAroundPlanet,
+                           float distanceToPlanet, 
+                           glm::mat4* planet,
                            glm::mat4* satellite) {
-    // rotate planet over the sun
-    // *planet = glm::translate(*planet, glm::vec3(0.0f, 0.0f,
-    // abs(distanceSun))); *planet = glm::rotate(*planet, *rotationSun,
-    // glm::vec3(0.0f, 0.5f, 0.0f)); *planet = glm::translate(*planet,
-    // glm::vec3(0.0f, 0.0f, distanceSun)); *rotationSun += rateSun;
+    float satelliteX = ((distanceToPlanet) * cos(*rotationPlanet)) /2 ;
+    float satelliteZ = ((distanceToPlanet) * sin(*rotationPlanet)) /2 ;
 
     // rotate satellite around planet
-    *satellite = glm::translate(*satellite,
-                                glm::vec3(0.0f, 0.0f, abs(distanceToPlanet)));
-    *satellite =
-        glm::rotate(*satellite, *rotationPlanet, glm::vec3(0.0f, 0.05f, 23.5f));
-    *satellite =
-        glm::translate(*satellite, glm::vec3(0.0f, 0.0f, distanceToPlanet));
+    // clang-format off
+
+
+     *satellite = glm::translate(*satellite,
+                                glm::vec3(satelliteX, 0.0f, satelliteZ));
+    // *satellite =
+    //     glm::rotate(*satellite, *rotationPlanet, glm::vec3(0.0f, 0.05f, 23.5f));
+    // *satellite =
+    //     glm::translate(*satellite, glm::vec3(0.0f, 0.0f, distanceToPlanet));
     *rotationPlanet += rateAroundPlanet;
+    
+    // glm::mat4 satelliteTranslation = glm::translate(glm::mat4(1.0f), glm::vec3(satelliteX, 0, satelliteZ));
+
+    // *satellite = (*planet) * glm::rotate(*satellite, glm::radians(*rotationPlanet), glm::vec3(0, 1, 0)) * satelliteTranslation;
 }
 
 int main() {
@@ -397,7 +480,7 @@ int main() {
         // Space
         matrixSpace = glm::translate(matrixSpace, glm::vec3(0.0f, 0.0f, 0.0f));
 
-        // Sum
+        // Sun
         matrixSun =     glm::translate(matrixSun, glm::vec3(0.0f, 0.0f, 0.0f));
 
         // Mercury
@@ -417,11 +500,10 @@ int main() {
         // Moon
         matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -210.0f));
         // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixMoon);
-        planetRotationItself(&r_moon_itself, r_moon_itself_rate, &matrixMoon);
         satelliteAroundPlanet(&r_moon_earth, r_moon_earth_rate, earth_moon_distance,
         &matrixEarth, &matrixMoon);
+        // planetRotationItself(&r_moon_itself, r_moon_itself_rate, &matrixMoon);
         
-
         // Mars
         matrixMars =    glm::translate(matrixMars, glm::vec3(0.0f, 0.0f, -304.0f));
         planetRotationSun(&r_mars_sun, r_mars_sun_rate, sun_mars_distance, &matrixMars);
@@ -554,8 +636,8 @@ int main() {
 
         // clang-format on
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse
-        // moved etc.)
+        // glfw: swap buffers and poll IO events (keys pressed/released,
+        // mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -567,8 +649,8 @@ int main() {
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this
-// frame and react accordingly
+// process all input: query GLFW whether relevant keys are pressed/released
+// this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -584,13 +666,13 @@ void processInput(GLFWwindow* window) {
         camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback
-// function executes
+// glfw: whenever the window size changed (by OS or user resize) this
+// callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    // make sure the viewport matches the new window dimensions; note that width
-    // and height will be significantly larger than specified on retina
-    // displays.
+    // make sure the viewport matches the new window dimensions; note that
+    // width and height will be significantly larger than specified on
+    // retina displays.
     glViewport(0, 0, width, height);
 }
 
