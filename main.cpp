@@ -145,6 +145,27 @@ float r_neptune_sun = 0.0f;
 float r_neptune_itself_rate = 0.001;
 float r_neptune_sun_rate = 0.001;
 
+// get world position on mouse click
+glm::vec3 getWorldPos(GLFWwindow *window, glm::mat4 view, glm::mat4 projection) {
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    float x = (2.0f * xpos) / width - 1.0f;
+    float y = 1.0f - (2.0f * ypos) / height;
+    float z = 1.0f;
+    glm::vec3 ray_nds = glm::vec3(x, y, z);
+    glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
+    glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
+    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+    glm::vec3 ray_wor = glm::vec3(glm::inverse(view) * ray_eye);
+    ray_wor = glm::normalize(ray_wor);
+
+    // print out the world position
+    std::cout << "World position: " << ray_wor.x << ", " << ray_wor.y << ", " << ray_wor.z << std::endl;
+    return ray_wor;
+}
+
 unsigned int loadFont() {
     FT_Library ft;
     if (FT_Init_FreeType(&ft)) {
@@ -348,7 +369,7 @@ int main() {
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -645,6 +666,12 @@ int main() {
         // Moon
         glBindTexture(GL_TEXTURE_2D, moonMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, moonModel, view, projection, matrixMoon, lightingShader);
+
+        // getWorldPos(window, view, projection);
+        // on mouse click get world position
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            getWorldPos(window, view, projection);
+        }
 
         // clang-format on
 
