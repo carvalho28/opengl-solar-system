@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/intersect.hpp>
 
 // #include <learnopengl/filesystem.h>
 #include <learnopengl/shader_m.h>
@@ -34,6 +36,10 @@ std::string path = std::filesystem::current_path();
 // MODELS
 // --SPHERE
 std::string sphere_obj = path + "/resources/models/sphere/shpere.obj";
+// -- SATURN
+std::string saturn_obj = path + "/resources/models/saturn/saturn.obj";
+// -- SATURN RING
+std::string saturn_ring_obj = path + "/resources/models/saturn/rings.obj";
 // --ASTEROID
 std::string asteroid_obj = path + "/resources/models/asteroid/asteroid.obj";
 
@@ -58,6 +64,8 @@ std::string mars_tex = path + "/resources/textures/mars_texture.jpg";
 std::string jupiter_tex = path + "/resources/textures/jupiter_texture.jpg";
 // --SATURN
 std::string saturn_tex = path + "/resources/textures/saturn_texture.jpg";
+// --SATURN RING
+std::string saturn_ring_tex = path + "/resources/textures/saturn_rings_texture.png";
 // --URANUS
 std::string uranus_tex = path + "/resources/textures/uranus_texture.jpg";
 // --NEPTUNE
@@ -70,6 +78,9 @@ std::string arial_font = path + "/resources/fonts/Poppins-Regular.ttf";
 // VARS
 static int amountOfAsteroids = 1000;
 
+// array of matrices
+glm::mat4 modelMatrices[10];
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -78,6 +89,7 @@ void RenderText(Shader &shader, std::string text, float x, float y, float scale,
 
 std::map<GLchar, Character> Characters;
 unsigned int tqVAO, tqVBO;  // Texture quads
+// GLuint crosshairVAO, crosshairVBO, crosshairCBO;
 
 // TODO: 60s = 1 rotation = 1 day
 
@@ -145,26 +157,164 @@ float r_neptune_sun = 0.0f;
 float r_neptune_itself_rate = 0.001;
 float r_neptune_sun_rate = 0.001;
 
-// get world position on mouse click
-glm::vec3 getWorldPos(GLFWwindow *window, glm::mat4 view, glm::mat4 projection) {
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-    float x = (2.0f * xpos) / width - 1.0f;
-    float y = 1.0f - (2.0f * ypos) / height;
-    float z = 1.0f;
-    glm::vec3 ray_nds = glm::vec3(x, y, z);
-    glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0, 1.0);
-    glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
-    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
-    glm::vec3 ray_wor = glm::vec3(glm::inverse(view) * ray_eye);
-    ray_wor = glm::normalize(ray_wor);
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
-    // print out the world position
-    std::cout << "World position: " << ray_wor.x << ", " << ray_wor.y << ", " << ray_wor.z << std::endl;
-    return ray_wor;
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
+// timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+// convert cursor position to normalized device coordinates
+void getXYZ(float xPos, float yPos, glm::mat4 projection, glm::mat4 view, glm::mat4 * modelMatrices, Shader* textShader) {
+    glm::vec2 ndc = {
+        (2.0f * xPos) / SCR_WIDTH - 1.0f,
+        1.0f - (2.0f * yPos) / SCR_HEIGHT
+    };
+    
+    // convert ndc to world space
+    glm::mat4 inverse_vp = glm::inverse(projection * view);
+    glm::vec4 world_pos = inverse_vp * glm::vec4(ndc, 0.0f, 1.0f);
+
+    // create a ray from the camera and verify that it intersects with some object
+    glm::vec3 ray_origin = camera.Position;
+    glm::vec3 ray_direction = glm::normalize(glm::vec3(world_pos) - ray_origin);
+    std::cout << "Ray origin: " << ray_origin.x << ", " << ray_origin.y << ", " << ray_origin.z << std::endl;
+    std::cout << "Ray direction: " << ray_direction.x << ", " << ray_direction.y << ", " << ray_direction.z << std::endl;
+
+    float distances[10];
+
+    // check distance from camera to each object
+    for (unsigned int i = 0; i < 10; i++) {
+        glm::vec3 object_pos = glm::vec3(modelMatrices[i][3]);
+        float distance = glm::distance(ray_origin, object_pos);
+        std::cout << "Distance from camera to object " << i << ": " << distance << std::endl;
+        distances[i] = distance;
+    }
+
+    // if distance is less than 10 show text
+    for (unsigned int i = 0; i < 10; i++) {
+        if (distances[i] < 20.0f) {
+            std::cout << "Object " << i << " is within 10 units of the camera" << std::endl;
+            if(i == 0) {
+                //sun
+                glEnable(GL_CULL_FACE);
+                glEnable(GL_BLEND);
+                RenderText(*textShader, "Sun", 575.0f, 25.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
+                glDisable(GL_CULL_FACE);
+                glDisable(GL_BLEND);
+            } else if (i == 1) {
+                //mercury
+            }
+        }
+    }
 }
+
+// calculate model radius of a blender model
+float calculateModelRadius(Model* model) {
+    float radius = 0.0f;
+    for (unsigned int i = 0; i < model->meshes.size(); i++) {
+        for (unsigned int j = 0; j < model->meshes[i].vertices.size(); j++) {
+            float distance = glm::length(model->meshes[i].vertices[j].Position);
+            if (distance > radius) {
+                radius = distance;
+            }
+        }
+    }
+    return radius;
+}
+
+// void transferCrosshairDataToGPUMemory(void)
+// {
+//     // Axis
+//     GLfloat g_vertex_axis_buffer_data[] = {
+//         // X axis
+//         -20.0f, 0.0f, 0.0f,
+//         20.0f, 0.0f, 0.0f,
+//         // Y axis
+//         0.0f, -0.5f ,0.0f,
+//         0.0f, 1.1f, 0.0f,
+//     };
+
+//     GLfloat g_color_axis_buffer_data[] = {
+//         1.0f, 1.0f, 1.0f,
+//         1.0f, 1.0f, 1.0f,
+//         1.0f, 1.0f, 1.0f,
+//         1.0f, 1.0f, 1.0f,
+//         1.0f, 1.0f, 1.0f,
+//         1.0f, 1.0f, 1.0f,
+//     };
+
+//     glGenBuffers(1, &crosshairVBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_axis_buffer_data), g_vertex_axis_buffer_data, GL_STATIC_DRAW);
+
+//     glGenBuffers(1, &crosshairCBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, crosshairCBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_axis_buffer_data), g_color_axis_buffer_data, GL_STATIC_DRAW);
+
+//     glGenVertexArrays(1, &crosshairVAO);
+//     glBindVertexArray(crosshairVAO);
+
+//     // load shaders here
+
+//     glGenBuffers(1, &crosshairVBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_axis_buffer_data), g_vertex_axis_buffer_data, GL_STATIC_DRAW);
+
+//     glGenBuffers(1, &crosshairCBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, crosshairCBO);
+//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_axis_buffer_data), g_color_axis_buffer_data, GL_STATIC_DRAW);
+
+// }
+
+// void cleanupDataFromGPU()
+// {
+//     glDeleteBuffers(1, &crosshairVBO);
+//     glDeleteBuffers(1, &crosshairCBO);
+//     glDeleteVertexArrays(1, &crosshairVAO);
+// }
+
+// void drawCrosshair()
+// {
+//     //glUseProgram(crosshairShaderProgram);
+
+//     glBindVertexArray(crosshairVAO);
+
+//     glEnableVertexAttribArray(0);
+//     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
+//     glVertexAttribPointer(
+//         0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+//         3,                  // size
+//         GL_FLOAT,           // type
+//         GL_FALSE,           // normalized?
+//         0,                  // stride
+//         (void*)0            // array buffer offset
+//     );
+
+//     glEnableVertexAttribArray(1);
+//     glBindBuffer(GL_ARRAY_BUFFER, crosshairCBO);
+//     glVertexAttribPointer(
+//         1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+//         3,                                // size
+//         GL_FLOAT,                         // type
+//         GL_FALSE,                         // normalized?
+//         0,                                // stride
+//         (void*)0                          // array buffer offset
+//     );
+
+//     glDrawArrays(GL_LINES_STRIP, 0, 2);
+//     glDrawArrays(GL_LINES_STRIP, 2, 2);
+
+//     glDisableVertexAttribArray(0);
+//     glDisableVertexAttribArray(1);
+// }
 
 unsigned int loadFont() {
     FT_Library ft;
@@ -274,20 +424,6 @@ unsigned int loadTexture(char const* path) {
     return textureID;
 }
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
-
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
 // Function to load planets with light
 void loadPlanetWithLight(float ambient, float diffuse, float specular,
                          float shininess, Model planet, glm::mat4 view,
@@ -368,7 +504,7 @@ int main() {
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    // tell GLFW to capture our mouse
+    // tell GLFW to capture our mouse MOUSE ENABLE
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
@@ -388,6 +524,11 @@ int main() {
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
 
+    // blend for text
+    // glEnable(GL_CULL_FACE); // was disabled by default
+    // glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // build and compile shaders
     // -------------------------
     Shader ourShader("model_loading.vs", "model_loading.fs");
@@ -400,16 +541,20 @@ int main() {
 
     Model spaceModel(sphere_obj); // skybox sphere
 
-    Model earthModel(sphere_obj);
     Model sunModel(sphere_obj);
     Model mercuryModel(sphere_obj);
     Model venusModel(sphere_obj);
+    Model earthModel(sphere_obj);
     Model marsModel(sphere_obj);
     Model jupiterModel(sphere_obj);
-    Model saturnModel(sphere_obj);
+    Model saturnModel(saturn_obj);
+    Model saturnRingModel(saturn_ring_obj);
     Model uranusModel(sphere_obj);
     Model neptuneModel(sphere_obj);
     Model moonModel(sphere_obj);
+
+    // print model radius
+    std::cout << "Sun radius: " << calculateModelRadius(&sunModel) << std::endl;
 
     // Model asteroidModel(asteroid_obj);
     Model asteroidModels[amountOfAsteroids];
@@ -429,14 +574,13 @@ int main() {
     unsigned int marsMap = loadTexture(mars_tex.c_str());
     unsigned int jupiterMap = loadTexture(jupiter_tex.c_str());
     unsigned int saturnMap = loadTexture(saturn_tex.c_str());
+    unsigned int saturnRingMap = loadTexture(saturn_ring_tex.c_str());
     unsigned int uranusMap = loadTexture(uranus_tex.c_str());
     unsigned int neptuneMap = loadTexture(neptune_tex.c_str());
     // Satellites
     unsigned int moonMap = loadTexture(moon_tex.c_str());
 
-    glm::mat4 projection_text = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
-
-    cout << "Here 1\n";
+    glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -460,17 +604,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // set texture to background
 
-        //glEnable(GL_CULL_FACE);
-        //glEnable(GL_BLEND);
-        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+        glEnable(GL_CULL_FACE); // was disabled by default
+        glEnable(GL_BLEND);
         loadFont();
-
-        //glm::mat4 projection_text = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
-        textShader.use();
-        RenderText(textShader, "nao consigo editar", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-        RenderText(textShader, "(C) Ana Cacho Paulo Lda.", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
-        glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection_text));
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_BLEND);
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
@@ -484,6 +622,15 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
+
+        // on mouse click get world position
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            // get mouse position
+            double xpos, ypos;
+            xpos = lastX;
+            ypos = lastY;
+            getXYZ(xpos, ypos, projection, view, modelMatrices, &textShader);
+        }
 
         // cout << "Here 3\n";
 
@@ -501,11 +648,13 @@ int main() {
         glm::mat4 matrixMars = glm::mat4(1.0f);
         glm::mat4 matrixJupiter = glm::mat4(1.0f);
         glm::mat4 matrixSaturn = glm::mat4(1.0f);
+        glm::mat4 matrixSaturnRing = glm::mat4(1.0f);
         glm::mat4 matrixUranus = glm::mat4(1.0f);
         glm::mat4 matrixNeptune = glm::mat4(1.0f);
 
         // Satellites
         glm::mat4 matrixMoon = glm::mat4(1.0f);
+ 
 
         glm::mat4 matrixAsteroids[amountOfAsteroids];
         // Asteroids
@@ -532,11 +681,11 @@ int main() {
 
         // Earth
         matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
-        // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
+        planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
         planetRotationItself(&r_earth_itself, r_earth_itself_rate, &matrixEarth);
         // Moon
         matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -200.0f));
-        // planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixMoon);
+        planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixMoon);
         satelliteAroundPlanet(&r_moon_earth, r_moon_earth_rate, earth_moon_distance,
         &matrixEarth, &matrixMoon);
         // planetRotationItself(&r_moon_itself, r_moon_itself_rate, &matrixMoon);
@@ -555,6 +704,11 @@ int main() {
         matrixSaturn =  glm::translate(matrixSaturn, glm::vec3(0.0f, 0.0f, -1427.0f));
         planetRotationSun(&r_saturn_sun, r_saturn_sun_rate, sun_saturn_distance, &matrixSaturn);
         planetRotationItself(&r_saturn_itself, r_saturn_itself_rate, &matrixSaturn);
+
+        // Saturn Ring
+        matrixSaturnRing = glm::translate(matrixSaturnRing, glm::vec3(0.0f, 0.0f, -1427.0f));
+        planetRotationSun(&r_saturn_sun, r_saturn_sun_rate, sun_saturn_distance, &matrixSaturnRing);
+        planetRotationItself(&r_saturn_itself, r_saturn_itself_rate, &matrixSaturnRing);
 
         // Uranus
         matrixUranus =  glm::translate(matrixUranus, glm::vec3(0.0f, 0.0f, -2000.0f));
@@ -596,17 +750,31 @@ int main() {
 
         matrixSpace = glm::scale(matrixSpace, glm::vec3(50.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
+        // print radius of sun
+        std::cout << "Radius of Sun: " << calculateModelRadius(&sunModel) << std::endl;
         matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f)); //0.033
+        std::cout << "Radius of Mercury: " << calculateModelRadius(&mercuryModel) << std::endl;
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
         matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
         matrixJupiter = glm::scale(matrixJupiter, glm::vec3(0.5f));
-        matrixSaturn =  glm::scale(matrixSaturn, glm::vec3(0.4f));
+        matrixSaturn =  glm::scale(matrixSaturn, glm::vec3(35.0f));
+        matrixSaturnRing = glm::scale(matrixSaturnRing, glm::vec3(35.0f));
         matrixUranus =  glm::scale(matrixUranus, glm::vec3(0.3f));
         matrixNeptune = glm::scale(matrixNeptune, glm::vec3(0.3f));
 
         matrixMoon = glm::scale(matrixMoon, glm::vec3(0.025f));
 
+        modelMatrices[0] = matrixSun;
+        modelMatrices[1] = matrixMercury;
+        modelMatrices[2] = matrixVenus;
+        modelMatrices[3] = matrixEarth;
+        modelMatrices[4] = matrixMars;
+        modelMatrices[5] = matrixJupiter;
+        modelMatrices[6] = matrixSaturn;
+        modelMatrices[7] = matrixUranus;
+        modelMatrices[8] = matrixNeptune;
+        modelMatrices[9] = matrixMoon;
 
         // bind diffuse map
         glActiveTexture(GL_TEXTURE0);
@@ -651,6 +819,9 @@ int main() {
 
         glBindTexture(GL_TEXTURE_2D, saturnMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, saturnModel, view, projection, matrixSaturn, lightingShader);
+
+        glBindTexture(GL_TEXTURE_2D, saturnRingMap);
+        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, saturnRingModel, view, projection, matrixSaturnRing, lightingShader);
         
         glBindTexture(GL_TEXTURE_2D, uranusMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, uranusModel, view, projection, matrixUranus, lightingShader);
@@ -667,11 +838,17 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, moonMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, moonModel, view, projection, matrixMoon, lightingShader);
 
-        // getWorldPos(window, view, projection);
-        // on mouse click get world position
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-            getWorldPos(window, view, projection);
-        }
+        // text rendering comes last
+        //glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
+        glEnable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+        textShader.use();
+        RenderText(textShader, "mmmmmmmmm", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+        RenderText(textShader, "mmmmmmmmmmm", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+        RenderText(textShader, ".", 400.0f, 300.0f, 0.5f, glm::vec3(1.0, 1.0f, 0.0f));
+        glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection_hud));
+        glDisable(GL_BLEND);
+        glDisable(GL_CULL_FACE);
 
         // clang-format on
 
