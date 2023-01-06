@@ -188,46 +188,6 @@ void getXYZ(float xPos, float yPos, glm::mat4 projection, glm::mat4 view, glm::m
     std::cout << "Ray origin: " << ray_origin.x << ", " << ray_origin.y << ", " << ray_origin.z << std::endl;
     std::cout << "Ray direction: " << ray_direction.x << ", " << ray_direction.y << ", " << ray_direction.z << std::endl;
 
-    float distances[10];
-
-    // check distance from camera to each object
-    for (unsigned int i = 0; i < 10; i++) {
-        glm::vec3 object_pos = glm::vec3(modelMatrices[i][3]);
-        float distance = glm::distance(ray_origin, object_pos);
-        std::cout << "Distance from camera to object " << i << ": " << distance << std::endl;
-        distances[i] = distance;
-    }
-
-    // if distance is less than 10 show text
-    for (unsigned int i = 0; i < 10; i++) {
-        if (distances[i] < 20.0f) {
-            std::cout << "Object " << i << " is within 10 units of the camera" << std::endl;
-            if(i == 0) {
-                //sun
-                glEnable(GL_CULL_FACE);
-                glEnable(GL_BLEND);
-                RenderText(*textShader, "Sun", 575.0f, 25.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
-                glDisable(GL_CULL_FACE);
-                glDisable(GL_BLEND);
-            } else if (i == 1) {
-                //mercury
-            }
-        }
-    }
-}
-
-// calculate model radius of a blender model
-float calculateModelRadius(Model* model) {
-    float radius = 0.0f;
-    for (unsigned int i = 0; i < model->meshes.size(); i++) {
-        for (unsigned int j = 0; j < model->meshes[i].vertices.size(); j++) {
-            float distance = glm::length(model->meshes[i].vertices[j].Position);
-            if (distance > radius) {
-                radius = distance;
-            }
-        }
-    }
-    return radius;
 }
 
 // void transferCrosshairDataToGPUMemory(void)
@@ -553,9 +513,6 @@ int main() {
     Model neptuneModel(sphere_obj);
     Model moonModel(sphere_obj);
 
-    // print model radius
-    std::cout << "Sun radius: " << calculateModelRadius(&sunModel) << std::endl;
-
     // Model asteroidModel(asteroid_obj);
     Model asteroidModels[amountOfAsteroids];
     // Array of asteroid models
@@ -750,10 +707,7 @@ int main() {
 
         matrixSpace = glm::scale(matrixSpace, glm::vec3(50.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
-        // print radius of sun
-        std::cout << "Radius of Sun: " << calculateModelRadius(&sunModel) << std::endl;
         matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f)); //0.033
-        std::cout << "Radius of Mercury: " << calculateModelRadius(&mercuryModel) << std::endl;
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
         matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
