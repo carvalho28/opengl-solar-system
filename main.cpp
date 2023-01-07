@@ -1,4 +1,5 @@
 // clang-format off
+#define GLFW_INCLUDE_GLU
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -22,6 +23,15 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
+
+#include "main.h"
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow* window);
+void RenderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
+
 
 struct Character {
     unsigned int TextureID;  // ID handle of the glyph texture
@@ -65,7 +75,8 @@ std::string jupiter_tex = path + "/resources/textures/jupiter_texture.jpg";
 // --SATURN
 std::string saturn_tex = path + "/resources/textures/saturn_texture.jpg";
 // --SATURN RING
-std::string saturn_ring_tex = path + "/resources/textures/saturn_rings_texture.png";
+std::string saturn_ring_tex =
+    path + "/resources/textures/saturn_rings_texture.png";
 // --URANUS
 std::string uranus_tex = path + "/resources/textures/uranus_texture.jpg";
 // --NEPTUNE
@@ -81,11 +92,13 @@ static int amountOfAsteroids = 1000;
 // array of matrices
 glm::mat4 modelMatrices[10];
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
-void RenderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
+// void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+// void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+// void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+// void processInput(GLFWwindow* window);
+// void RenderText(Shader& shader, std::string text, float x, float y, float
+// scale,
+//                 glm::vec3 color);
 
 std::map<GLchar, Character> Characters;
 unsigned int tqVAO, tqVBO;  // Texture quads
@@ -172,109 +185,24 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // convert cursor position to normalized device coordinates
-void getXYZ(float xPos, float yPos, glm::mat4 projection, glm::mat4 view, glm::mat4 * modelMatrices, Shader* textShader) {
-    glm::vec2 ndc = {
-        (2.0f * xPos) / SCR_WIDTH - 1.0f,
-        1.0f - (2.0f * yPos) / SCR_HEIGHT
-    };
-    
+void getXYZ(float xPos, float yPos, glm::mat4 projection, glm::mat4 view,
+            glm::mat4* modelMatrices, Shader* textShader) {
+    glm::vec2 ndc = {(2.0f * xPos) / SCR_WIDTH - 1.0f,
+                     1.0f - (2.0f * yPos) / SCR_HEIGHT};
+
     // convert ndc to world space
     glm::mat4 inverse_vp = glm::inverse(projection * view);
     glm::vec4 world_pos = inverse_vp * glm::vec4(ndc, 0.0f, 1.0f);
 
-    // create a ray from the camera and verify that it intersects with some object
+    // create a ray from the camera and verify that it intersects with some
+    // object
     glm::vec3 ray_origin = camera.Position;
     glm::vec3 ray_direction = glm::normalize(glm::vec3(world_pos) - ray_origin);
-    std::cout << "Ray origin: " << ray_origin.x << ", " << ray_origin.y << ", " << ray_origin.z << std::endl;
-    std::cout << "Ray direction: " << ray_direction.x << ", " << ray_direction.y << ", " << ray_direction.z << std::endl;
-
+    std::cout << "Ray origin: " << ray_origin.x << ", " << ray_origin.y << ", "
+              << ray_origin.z << std::endl;
+    std::cout << "Ray direction: " << ray_direction.x << ", " << ray_direction.y
+              << ", " << ray_direction.z << std::endl;
 }
-
-// void transferCrosshairDataToGPUMemory(void)
-// {
-//     // Axis
-//     GLfloat g_vertex_axis_buffer_data[] = {
-//         // X axis
-//         -20.0f, 0.0f, 0.0f,
-//         20.0f, 0.0f, 0.0f,
-//         // Y axis
-//         0.0f, -0.5f ,0.0f,
-//         0.0f, 1.1f, 0.0f,
-//     };
-
-//     GLfloat g_color_axis_buffer_data[] = {
-//         1.0f, 1.0f, 1.0f,
-//         1.0f, 1.0f, 1.0f,
-//         1.0f, 1.0f, 1.0f,
-//         1.0f, 1.0f, 1.0f,
-//         1.0f, 1.0f, 1.0f,
-//         1.0f, 1.0f, 1.0f,
-//     };
-
-//     glGenBuffers(1, &crosshairVBO);
-//     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_axis_buffer_data), g_vertex_axis_buffer_data, GL_STATIC_DRAW);
-
-//     glGenBuffers(1, &crosshairCBO);
-//     glBindBuffer(GL_ARRAY_BUFFER, crosshairCBO);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_axis_buffer_data), g_color_axis_buffer_data, GL_STATIC_DRAW);
-
-//     glGenVertexArrays(1, &crosshairVAO);
-//     glBindVertexArray(crosshairVAO);
-
-//     // load shaders here
-
-//     glGenBuffers(1, &crosshairVBO);
-//     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_axis_buffer_data), g_vertex_axis_buffer_data, GL_STATIC_DRAW);
-
-//     glGenBuffers(1, &crosshairCBO);
-//     glBindBuffer(GL_ARRAY_BUFFER, crosshairCBO);
-//     glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_axis_buffer_data), g_color_axis_buffer_data, GL_STATIC_DRAW);
-
-// }
-
-// void cleanupDataFromGPU()
-// {
-//     glDeleteBuffers(1, &crosshairVBO);
-//     glDeleteBuffers(1, &crosshairCBO);
-//     glDeleteVertexArrays(1, &crosshairVAO);
-// }
-
-// void drawCrosshair()
-// {
-//     //glUseProgram(crosshairShaderProgram);
-
-//     glBindVertexArray(crosshairVAO);
-
-//     glEnableVertexAttribArray(0);
-//     glBindBuffer(GL_ARRAY_BUFFER, crosshairVBO);
-//     glVertexAttribPointer(
-//         0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-//         3,                  // size
-//         GL_FLOAT,           // type
-//         GL_FALSE,           // normalized?
-//         0,                  // stride
-//         (void*)0            // array buffer offset
-//     );
-
-//     glEnableVertexAttribArray(1);
-//     glBindBuffer(GL_ARRAY_BUFFER, crosshairCBO);
-//     glVertexAttribPointer(
-//         1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-//         3,                                // size
-//         GL_FLOAT,                         // type
-//         GL_FALSE,                         // normalized?
-//         0,                                // stride
-//         (void*)0                          // array buffer offset
-//     );
-
-//     glDrawArrays(GL_LINES_STRIP, 0, 2);
-//     glDrawArrays(GL_LINES_STRIP, 2, 2);
-
-//     glDisableVertexAttribArray(0);
-//     glDisableVertexAttribArray(1);
-// }
 
 unsigned int loadFont() {
     FT_Library ft;
@@ -438,7 +366,7 @@ void satelliteAroundPlanet(float* rotationPlanet,
     *rotationPlanet += rateAroundPlanet;
 }
 
-int main() {
+int solarSystemRender() {
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();

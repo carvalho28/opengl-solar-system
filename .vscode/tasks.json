@@ -21,6 +21,8 @@
         "-o",
         "${workspaceFolder}/app",
         "-framework",
+        "GLUT",
+        "-framework",
         "OpenGL",
         "-framework",
         "Cocoa",
@@ -31,8 +33,7 @@
         "-framework",
         "CoreFoundation",
         "-Wno-deprecated",
-        "-lfreetype",
-        "-lglut"
+        "-lfreetype"
       ],
       "options": {
         "cwd": "${fileDirname}"
