@@ -77,11 +77,11 @@ void display() {
     glEnd();
 
     // draw the text
-    glColor3f(1, 0, 0);
+    glColor3f(0, 0, 0);
     int widthStart =
-        glutStrokeLength(GLUT_STROKE_ROMAN, (const unsigned char*)"Start Game");
-    renderStrokeString("Start Game", WIDTH / 2 - widthStart / 10,
-                       HEIGHT / 2 - 10, 0.2, 0.2, 0.2);
+        glutStrokeLength(GLUT_STROKE_ROMAN, (const unsigned char*)"Start");
+    renderStrokeString("Start", WIDTH / 2 - widthStart / 10, HEIGHT / 2 - 10,
+                       0.2, 0.2, 0.2);
 
     // Draw the "Exit" button centered in the window below the "Start Game"
     glColor3f(1, 1, 1);
@@ -198,7 +198,7 @@ void mouse(int button, int state, int x, int y) {
         if (WIDTH / 2 - 100 <= x && x <= WIDTH / 2 + 100 &&
             HEIGHT / 2 - 150 <= y && y <= HEIGHT / 2 + 250) {
             printf("Exit button clicked\n");
-            closeProgram();
+            // closeProgram();
         }
     }
 }

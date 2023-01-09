@@ -198,18 +198,20 @@ float r_saturn_itself_rate = r_earth_itself_rate/0.47;
 float r_saturn_sun_rate = r_earth_sun_rate / 29;
 
 // Uranus
-float sun_uranus_distance = -2500.0f;
+float sun_uranus_distance = -2100.0f;
 float r_uranus_itself = 0.0f;
 float r_uranus_sun = 0.0f;
 float r_uranus_itself_rate = r_earth_itself_rate/0.71;
 float r_uranus_sun_rate = r_earth_sun_rate / 84;
 
 // Neptune
-float sun_neptune_distance = -300.0f;
+float sun_neptune_distance = -2500.0f;
 float r_neptune_itself = 0.0f;
 float r_neptune_sun = 0.0f;
 float r_neptune_itself_rate = r_earth_itself_rate/0.67;
 float r_neptune_sun_rate = r_earth_sun_rate / 165;
+
+bool first_iteration = true;
 
 // settings
 const float SCR_WIDTH = 1600;
@@ -649,13 +651,25 @@ void keyboardCallbacks(GLFWwindow *window, int key, int scancode, int action,
     }
 
     if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+        r_mercury_sun_rate *= 2;
+        r_venus_sun_rate *= 2;
        r_earth_sun_rate *= 2;
-       r_earth_itself_rate *= 2;
+       r_mars_sun_rate *= 2;
+       r_jupiter_sun_rate *= 2;
+       r_saturn_sun_rate *= 2;
+       r_uranus_sun_rate *= 2;
+       r_neptune_sun_rate *= 2;
     }
 
     if (key == GLFW_KEY_O && action == GLFW_PRESS) {
+       r_mercury_sun_rate /= 2;
+        r_venus_sun_rate /= 2;
        r_earth_sun_rate /= 2;
-       r_earth_itself_rate /= 2;
+       r_mars_sun_rate /= 2;
+       r_jupiter_sun_rate /= 2;
+       r_saturn_sun_rate /= 2;
+       r_uranus_sun_rate /= 2;
+       r_neptune_sun_rate /= 2;
     }
 
 }
@@ -794,7 +808,7 @@ int solarSystemRender() {
         // view/projection transformations
         glm::mat4 projection = glm::perspective(
             glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT,
-            0.5f, 5000.0f);
+            0.5f, 50000.0f);
         // glm::mat4 projection = glm::perspective(
         //     105.0f, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -857,6 +871,87 @@ int solarSystemRender() {
 
         // Sun
         matrixSun =     glm::translate(matrixSun, glm::vec3(0.0f, 0.0f, 0.0f));
+
+        if (first_iteration) {
+
+            int i = 1000;
+            while (i > 0) {
+            // Mercury
+                matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, sun_mercury_distance));
+                planetRotationSun(&r_mercury_sun, r_mercury_sun_rate, sun_mercury_distance, &matrixMercury);
+                planetRotationItself(&r_mercury_itself, r_mercury_itself_rate, &matrixMercury);
+                i--;
+            }
+
+            i = 5000;
+            while (i > 0) {
+                // Venus
+                matrixVenus =   glm::translate(matrixVenus, glm::vec3(0.0f, 0.0f, -144.0f));
+                planetRotationSun(&r_venus_sun, r_venus_sun_rate, sun_venus_distance, &matrixVenus);
+                planetRotationItself(&r_venus_itself, r_venus_itself_rate, &matrixVenus);
+                i--;
+            }
+
+            i = 10000;
+            while (i > 0) {
+                // Earth
+                matrixEarth =   glm::translate(matrixEarth, glm::vec3(0.0f, 0.0f, -200.0f));
+                planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixEarth);
+                planetRotationItself(&r_earth_itself, r_earth_itself_rate, &matrixEarth);
+                // Moon
+                matrixMoon =    glm::translate(matrixMoon, glm::vec3(0.0f, 0.0f, -200.0f));
+                planetRotationSun(&r_earth_sun, r_earth_sun_rate, sun_earth_distance, &matrixMoon);
+                satelliteAroundPlanet(&r_moon_earth, r_moon_earth_rate, earth_moon_distance,
+                &matrixEarth, &matrixMoon);
+                // planetRotationItself(&r_moon_itself, r_moon_itself_rate, &matrixMoon);
+                i--;
+            }
+            i = 7000;
+            while (i > 0) {    
+                // Mars
+                matrixMars =    glm::translate(matrixMars, glm::vec3(0.0f, 0.0f, -304.0f));
+                planetRotationSun(&r_mars_sun, r_mars_sun_rate, sun_mars_distance, &matrixMars);
+                planetRotationItself(&r_mars_itself, r_mars_itself_rate, &matrixMars);
+                i--;
+            }
+            i = 100;
+            while (i > 0) {
+                // Jupiter
+                matrixJupiter = glm::translate(matrixJupiter, glm::vec3(0.0f, 0.0f, -778.0f));
+                planetRotationSun(&r_jupiter_sun, r_jupiter_sun_rate, sun_jupiter_distance, &matrixJupiter);
+                planetRotationItself(&r_jupiter_itself, r_jupiter_itself_rate, &matrixJupiter);
+                i--;
+            }
+            i = 2000;
+            while (i > 0) {
+                // Saturn
+                matrixSaturn =  glm::translate(matrixSaturn, glm::vec3(0.0f, 0.0f, -1427.0f));
+                planetRotationSun(&r_saturn_sun, r_saturn_sun_rate, sun_saturn_distance, &matrixSaturn);
+                planetRotationItself(&r_saturn_itself, r_saturn_itself_rate, &matrixSaturn);
+
+                // Saturn Ring
+                matrixSaturnRing = glm::translate(matrixSaturnRing, glm::vec3(0.0f, 0.0f, -1427.0f));
+                planetRotationSun(&r_saturn_sun, r_saturn_sun_rate, sun_saturn_distance, &matrixSaturnRing);
+                planetRotationItself(&r_saturn_itself, r_saturn_itself_rate, &matrixSaturnRing);
+                i--;
+            }
+            i = 300000;
+            while (i > 0) {
+                // Uranus
+                matrixUranus =  glm::translate(matrixUranus, glm::vec3(0.0f, 0.0f, -2000.0f));
+                planetRotationSun(&r_uranus_sun, r_uranus_sun_rate, sun_uranus_distance, &matrixUranus);
+                planetRotationItself(&r_uranus_itself, r_uranus_itself_rate, &matrixUranus);
+                i--;
+            }
+            i = 700000;
+            while (i > 0) {
+                // Neptune
+                matrixNeptune = glm::translate(matrixNeptune, glm::vec3(0.0f, 0.0f, -2500.0f));
+                planetRotationSun(&r_neptune_sun, r_neptune_sun_rate, sun_neptune_distance, &matrixNeptune);
+                planetRotationItself(&r_neptune_itself, r_neptune_itself_rate, &matrixNeptune);
+                i--;
+            }
+        }
 
         // Mercury
         matrixMercury = glm::translate(matrixMercury, glm::vec3(0.0f, 0.0f, sun_mercury_distance));
@@ -944,13 +1039,13 @@ int solarSystemRender() {
         
         }
 
-        matrixSpace = glm::scale(matrixSpace, glm::vec3(50.0f));
+        matrixSpace = glm::scale(matrixSpace, glm::vec3(70.0f));
         matrixSun =     glm::scale(matrixSun, glm::vec3(1.0f));
         matrixMercury = glm::scale(matrixMercury, glm::vec3(0.033f)); //0.033
         matrixVenus =   glm::scale(matrixVenus, glm::vec3(0.095f));
         matrixEarth =   glm::scale(matrixEarth, glm::vec3(0.095f));
         matrixMars =    glm::scale(matrixMars, glm::vec3(0.053f));
-        matrixJupiter = glm::scale(matrixJupiter, glm::vec3(0.5f));
+        matrixJupiter = glm::scale(matrixJupiter, glm::vec3(0.8f));
         matrixSaturn =  glm::scale(matrixSaturn, glm::vec3(35.0f));
         matrixSaturnRing = glm::scale(matrixSaturnRing, glm::vec3(35.0f));
         matrixUranus =  glm::scale(matrixUranus, glm::vec3(0.3f));
@@ -1038,15 +1133,15 @@ int solarSystemRender() {
             glEnable(GL_CULL_FACE);
             textShader.use();
             // Name of the planet
-            RenderText(textShader, curPlanetInfo[0], 25.0f, 550.0f, 1.0f, glm::vec3(0.00, 0.00f, 0.00f)); // Star Wars Yellow
+            RenderText(textShader, curPlanetInfo[0], 25.0f, SCR_HEIGHT - 60.0f, 1.0f, glm::vec3(1.00, 1.00f, 1.00f)); // Star Wars Yellow
             // Description of the planet
-            RenderText(textShader, curPlanetInfo[1], 25.0f, 90.0f, 0.5f, glm::vec3(0.00, 0.00f, 0.00f)); 
-            RenderText(textShader, curPlanetInfo[2], 25.0f, 60.0f, 0.5f, glm::vec3(0.00, 0.00f, 0.00f)); 
-            RenderText(textShader, curPlanetInfo[3], 25.0f, 30.0f, 0.5f, glm::vec3(0.00, 0.00f, 0.00f)); 
+            RenderText(textShader, curPlanetInfo[1], 25.0f, 90.0f, 0.5f, glm::vec3(1.00, 1.00f, 1.00f)); 
+            RenderText(textShader, curPlanetInfo[2], 25.0f, 60.0f, 0.5f, glm::vec3(1.00, 1.00f, 1.00f)); 
+            RenderText(textShader, curPlanetInfo[3], 25.0f, 30.0f, 0.5f, glm::vec3(1.00, 1.00f, 1.00f)); 
         }
 
         // Crosshair
-        RenderText(textShader, ".", 400.0f, 300.0f, 0.5f, glm::vec3(1.0, 1.0f, 0.0f));
+        RenderText(textShader, ".", SCR_WIDTH / 2, SCR_HEIGHT / 2, 0.5f, glm::vec3(1.0, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection_hud));
         glDisable(GL_BLEND);
         glDisable(GL_CULL_FACE);
@@ -1060,6 +1155,7 @@ int solarSystemRender() {
         glfwPollEvents();
 
         glFlush();
+        first_iteration = false;
     }
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
