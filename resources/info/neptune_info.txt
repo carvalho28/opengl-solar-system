@@ -1,6 +1,4 @@
 Neptune
 Radius: 24,622 km
 Orbital period: 165 years
-Mass: 1.024 × 10^26 kg
-Dark, cold, and whipped by supersonic winds, ice giant Neptune is the eighth and most distant planet in our solar system.
-More than 30 times as far from the Sun as Earth, Neptune is the only planet in our solar system not visible to the naked eye and the first predicted by mathematics before its discovery. In 2011 Neptune completed its first 165-year orbit since its discovery in 1846.
+Shy Neptune is the only planet invisible to the naked eye!

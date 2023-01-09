@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <filesystem>
+#include <unistd.h>
 // clang-format on
 #include "main-menu.h"
 
@@ -137,6 +138,46 @@ void loadingScreen() {
     glutSwapBuffers();
 }
 
+void renderStarWarsText() {
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Set the projection matrix
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, WIDTH, 0, HEIGHT);
+
+    // Set the modelview matrix
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    // scale the size of the text
+    glScalef(1, 2, 1);
+
+    // star wars color
+    glColor3f(1, 1, 0);
+
+    // read text from file
+    FILE* fp = fopen(
+        "/Users/carvalho28/uni/cg/cg-avaliacoes/sistema-solar/resources/info/"
+        "intro.txt",
+        "r");
+    char str[100];
+    int i = -135;
+
+    // present the text with scrolling effect
+    while (fgets(str, 100, fp) != NULL) {
+        int width =
+            glutStrokeLength(GLUT_STROKE_ROMAN, (const unsigned char*)str);
+        renderStrokeString(str, WIDTH / 2 - width / 10, HEIGHT / 3 + i, 0.2,
+                           0.2, 0.2);
+        i += 40;
+    }
+
+    // Swap buffers
+    glutSwapBuffers();
+}
+
 // check if the mouse was clicked inside the button
 void mouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
@@ -146,7 +187,9 @@ void mouse(int button, int state, int x, int y) {
             y >= HEIGHT / 2 - 50 && y <= HEIGHT / 2 + 50) {
             printf("Start Game button clicked\n");
             //  show loading screen
-            loadingScreen();
+            // loadingScreen();
+            //  read star wars text using
+            renderStarWarsText();
             // start the solar system and close the main menu
             glutDestroyWindow(window);
             solarSystemRender();

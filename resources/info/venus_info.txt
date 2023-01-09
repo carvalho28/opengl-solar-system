@@ -1,2 +1,4 @@
 Venus
-Venus spins slowly in the opposite direction from most planets. A thick atmosphere traps heat in a runaway greenhouse effect, making it the hottest planet in our solar system.
+Radius: 6,051.8 km
+Orbital period: 225 days
+Venus is the hottest planet on the solar system at around 462ºC!

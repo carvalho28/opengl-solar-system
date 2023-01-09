@@ -1,0 +1,4 @@
+Moon
+Radius: 1,737.4 km
+Earth orbital period: 27 days
+The Moon is Earth's only natural satellite!

@@ -1,5 +1,4 @@
 Uranus
 Radius: 25,362 km
 Orbital period: 84 years
-Mass: 8.681 × 10^25 kg
-Uranus—seventh planet from the Sun—rotates at a nearly 90-degree angle from the plane of its orbit. This unique tilt makes Uranus appear to spin on its side.
+Uranus has such a tilt that it looks like it's spinning sideways!

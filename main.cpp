@@ -86,19 +86,49 @@ std::string neptune_tex = path + "/resources/textures/neptune_texture.jpg";
 // FONTS
 std::string arial_font = path + "/resources/fonts/Poppins-Regular.ttf";
 
+bool showPlanetsMenu = false;
+static int numOfPlanets = 10;
+// static string curPlanetMenu[planets] = {"Earth", "Moon", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Sun", "Mercury", "Venus"};
+int curPlanetMenu = 0;
+glm::vec3 curPlanetPos;
+
 // INFO
-std::vector<std::string> sunInfo = readInfo("sun_info.txt");
-std::vector<std::string> mercuryInfo = readInfo("mercury_info.txt");
-std::vector<std::string> venusInfo = readInfo("venus_info.txt");
+// std::vector<std::string> planetsInfo[numOfPlanets];
+// std::vector<std::vector<std::string>> planetsInfo[10];
+
 std::vector<std::string> earthInfo = readInfo("earth_info.txt");
+std::vector<std::string> moonInfo = readInfo("moon_info.txt");
 std::vector<std::string> marsInfo = readInfo("mars_info.txt");
 std::vector<std::string> jupiterInfo = readInfo("jupiter_info.txt");
 std::vector<std::string> saturnInfo = readInfo("saturn_info.txt");
 std::vector<std::string> uranusInfo = readInfo("uranus_info.txt");
 std::vector<std::string> neptuneInfo = readInfo("neptune_info.txt");
+std::vector<std::string> sunInfo = readInfo("sun_info.txt");
+std::vector<std::string> mercuryInfo = readInfo("mercury_info.txt");
+std::vector<std::string> venusInfo = readInfo("venus_info.txt");
+
+std::vector<std::string> curPlanetInfo = earthInfo;
+
+
+// render the loaded model
+glm::mat4 matrixSpace = glm::mat4(1.0f);
+glm::mat4 matrixSun = glm::mat4(1.0f);
+// Planets
+glm::mat4 matrixMercury = glm::mat4(1.0f);
+glm::mat4 matrixVenus = glm::mat4(1.0f);
+glm::mat4 matrixEarth = glm::mat4(1.0f);
+glm::mat4 matrixMars = glm::mat4(1.0f);
+glm::mat4 matrixJupiter = glm::mat4(1.0f);
+glm::mat4 matrixSaturn = glm::mat4(1.0f);
+glm::mat4 matrixSaturnRing = glm::mat4(1.0f);
+glm::mat4 matrixUranus = glm::mat4(1.0f);
+glm::mat4 matrixNeptune = glm::mat4(1.0f);
+
+// Satellites
+glm::mat4 matrixMoon = glm::mat4(1.0f);
  
 // VARS
-static int amountOfAsteroids = 1000;
+static int amountOfAsteroids = 250;
 
 // array of matrices
 glm::mat4 modelMatrices[10];
@@ -182,8 +212,8 @@ float r_neptune_itself_rate = r_earth_itself_rate/0.67;
 float r_neptune_sun_rate = r_earth_sun_rate / 165;
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const float SCR_WIDTH = 1600;
+const float SCR_HEIGHT = 900;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -195,7 +225,13 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-bool showPlanetsMenu = false;
+
+// get position of planet based on matrix 
+glm::vec3 getPlanetPos(glm::mat4 model) {
+    glm::vec4 pos = model * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    printf("pos: %f, %f, %f\n", pos.x, pos.y, pos.z);
+    return glm::vec3(pos.x, pos.y, pos.z);
+}
 
 // convert cursor position to normalized device coordinates
 void getXYZ(float xPos, float yPos, glm::mat4 projection, glm::mat4 view,
@@ -382,10 +418,213 @@ void satelliteAroundPlanet(float* rotationPlanet,
 // keyboard callback
 void keyboardCallbacks(GLFWwindow *window, int key, int scancode, int action,
                        int mods) {
+
+    // restart
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
+        if (showPlanetsMenu)
+        {
+            if (curPlanetMenu + 1 == numOfPlanets)
+                curPlanetMenu = 0;
+            else
+                curPlanetMenu++;
+            switch (curPlanetMenu)
+            {
+            case 0:
+                curPlanetInfo = earthInfo;
+                curPlanetPos = getPlanetPos(matrixEarth);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 1:
+                curPlanetInfo = moonInfo;
+                curPlanetPos = getPlanetPos(matrixMoon);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 2:
+                curPlanetInfo = marsInfo;
+                curPlanetPos = getPlanetPos(matrixMars);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 3:
+                curPlanetInfo = jupiterInfo;
+                curPlanetPos = getPlanetPos(matrixJupiter);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 4:
+                curPlanetInfo = saturnInfo;
+                curPlanetPos = getPlanetPos(matrixSaturn);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 5:
+                curPlanetInfo = uranusInfo;
+                curPlanetPos = getPlanetPos(matrixUranus);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 6:
+                curPlanetInfo = neptuneInfo;
+                curPlanetPos = getPlanetPos(matrixNeptune);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 7:
+                curPlanetInfo = sunInfo;
+                curPlanetPos = getPlanetPos(matrixSun);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 8:
+                curPlanetInfo = mercuryInfo;
+                curPlanetPos = getPlanetPos(matrixMercury);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 9:
+                curPlanetInfo = venusInfo;
+                curPlanetPos = getPlanetPos(matrixVenus);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            default:
+                curPlanetInfo = earthInfo;
+                curPlanetPos = getPlanetPos(matrixEarth);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            }
+        }
+        
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT)) {
+        if (showPlanetsMenu)
+        {
+            if (curPlanetMenu - 1 == -1)
+                curPlanetMenu = numOfPlanets - 1;
+            else
+                curPlanetMenu--;
+            switch (curPlanetMenu)
+            {
+            case 0:
+                curPlanetInfo = earthInfo;
+                curPlanetPos = getPlanetPos(matrixEarth);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 1:
+                curPlanetInfo = moonInfo;
+                curPlanetPos = getPlanetPos(matrixMoon);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 2:
+                curPlanetInfo = marsInfo;
+                curPlanetPos = getPlanetPos(matrixMars);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 3:
+                curPlanetInfo = jupiterInfo;
+                curPlanetPos = getPlanetPos(matrixJupiter);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 4:
+                curPlanetInfo = saturnInfo;
+                curPlanetPos = getPlanetPos(matrixSaturn);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 5:
+                curPlanetInfo = uranusInfo;
+                curPlanetPos = getPlanetPos(matrixUranus);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 6:
+                curPlanetInfo = neptuneInfo;
+                curPlanetPos = getPlanetPos(matrixNeptune);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 7:
+                curPlanetInfo = sunInfo;
+                curPlanetPos = getPlanetPos(matrixSun);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 8:
+                curPlanetInfo = mercuryInfo;
+                curPlanetPos = getPlanetPos(matrixMercury);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 9:
+                curPlanetInfo = venusInfo;
+                curPlanetPos = getPlanetPos(matrixVenus);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            default:
+                curPlanetInfo = earthInfo;
+                curPlanetPos = getPlanetPos(matrixEarth);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            }
+        }
+        
+    }
                         
     // text menu
     if (key == GLFW_KEY_M && action == GLFW_PRESS) {
         showPlanetsMenu = !showPlanetsMenu;
+        if (showPlanetsMenu) {
+            switch (curPlanetMenu)
+            {
+            case 0:
+                curPlanetInfo = earthInfo;
+                curPlanetPos = getPlanetPos(matrixEarth);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 1:
+                curPlanetInfo = moonInfo;
+                curPlanetPos = getPlanetPos(matrixMoon);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 2:
+                curPlanetInfo = marsInfo;
+                curPlanetPos = getPlanetPos(matrixMars);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 3:
+                curPlanetInfo = jupiterInfo;
+                curPlanetPos = getPlanetPos(matrixJupiter);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 4:
+                curPlanetInfo = saturnInfo;
+                curPlanetPos = getPlanetPos(matrixSaturn);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 5:
+                curPlanetInfo = uranusInfo;
+                curPlanetPos = getPlanetPos(matrixUranus);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 6:
+                curPlanetInfo = neptuneInfo;
+                curPlanetPos = getPlanetPos(matrixNeptune);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 7:
+                curPlanetInfo = sunInfo;
+                curPlanetPos = getPlanetPos(matrixSun);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 8:
+                curPlanetInfo = mercuryInfo;
+                curPlanetPos = getPlanetPos(matrixMercury);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            case 9:
+                curPlanetInfo = venusInfo;
+                curPlanetPos = getPlanetPos(matrixVenus);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            default:
+                curPlanetInfo = earthInfo;
+                curPlanetPos = getPlanetPos(matrixEarth);
+                camera.Position = glm::vec3(curPlanetPos.x, 0.0f, curPlanetPos.z);
+                break;
+            }
+        }
     }
     
     // move up on long press
@@ -398,8 +637,27 @@ void keyboardCallbacks(GLFWwindow *window, int key, int scancode, int action,
     }
     // reset model on r press
     if (key == GLFW_KEY_R && action == GLFW_PRESS) {
-
+        showPlanetsMenu = false;
+        r_mercury_sun = 0;
+        r_venus_sun = 0;
+        r_earth_sun = 0;
+        r_mars_sun = 0;
+        r_jupiter_sun = 0;
+        r_saturn_sun = 0;
+        r_uranus_sun = 0;
+        r_neptune_itself = 0;
     }
+
+    if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+       r_earth_sun_rate *= 2;
+       r_earth_itself_rate *= 2;
+    }
+
+    if (key == GLFW_KEY_O && action == GLFW_PRESS) {
+       r_earth_sun_rate /= 2;
+       r_earth_itself_rate /= 2;
+    }
+
 }
 
 int solarSystemRender() {
@@ -500,7 +758,7 @@ int solarSystemRender() {
     // Satellites
     unsigned int moonMap = loadTexture(moon_tex.c_str());
 
-    glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
+    glm::mat4 projection_hud = glm::ortho(0.0f, SCR_WIDTH, 0.0f, SCR_HEIGHT);
 
     glEnable(GL_CULL_FACE); // was disabled by default
     glEnable(GL_BLEND);
@@ -558,29 +816,40 @@ int solarSystemRender() {
         // asteroidShader.setMat4("projection", projection);
         // asteroidShader.setMat4("view", view);
 
+
+        // // render the loaded model
+        // glm::mat4 matrixSpace = glm::mat4(1.0f);
+        // glm::mat4 matrixSun = glm::mat4(1.0f);
+        // // Planets
+        // glm::mat4 matrixMercury = glm::mat4(1.0f);
+        // glm::mat4 matrixVenus = glm::mat4(1.0f);
+        // glm::mat4 matrixEarth = glm::mat4(1.0f);
+        // glm::mat4 matrixMars = glm::mat4(1.0f);
+        // glm::mat4 matrixJupiter = glm::mat4(1.0f);
+        // glm::mat4 matrixSaturn = glm::mat4(1.0f);
+        // glm::mat4 matrixSaturnRing = glm::mat4(1.0f);
+        // glm::mat4 matrixUranus = glm::mat4(1.0f);
+        // glm::mat4 matrixNeptune = glm::mat4(1.0f);
+
+        // // Satellites
+        // glm::mat4 matrixMoon = glm::mat4(1.0f);
+
         // render the loaded model
-        glm::mat4 matrixSpace = glm::mat4(1.0f);
-        glm::mat4 matrixSun = glm::mat4(1.0f);
+        matrixSpace = glm::mat4(1.0f);
+        matrixSun = glm::mat4(1.0f);
         // Planets
-        glm::mat4 matrixMercury = glm::mat4(1.0f);
-        glm::mat4 matrixVenus = glm::mat4(1.0f);
-        glm::mat4 matrixEarth = glm::mat4(1.0f);
-        glm::mat4 matrixMars = glm::mat4(1.0f);
-        glm::mat4 matrixJupiter = glm::mat4(1.0f);
-        glm::mat4 matrixSaturn = glm::mat4(1.0f);
-        glm::mat4 matrixSaturnRing = glm::mat4(1.0f);
-        glm::mat4 matrixUranus = glm::mat4(1.0f);
-        glm::mat4 matrixNeptune = glm::mat4(1.0f);
+        matrixMercury = glm::mat4(1.0f);
+        matrixVenus = glm::mat4(1.0f);
+        matrixEarth = glm::mat4(1.0f);
+        matrixMars = glm::mat4(1.0f);
+        matrixJupiter = glm::mat4(1.0f);
+        matrixSaturn = glm::mat4(1.0f);
+        matrixSaturnRing = glm::mat4(1.0f);
+        matrixUranus = glm::mat4(1.0f);
+        matrixNeptune = glm::mat4(1.0f);
 
         // Satellites
-        glm::mat4 matrixMoon = glm::mat4(1.0f);
- 
-
-        glm::mat4 matrixAsteroids[amountOfAsteroids];
-        // Asteroids
-        for (int i = 0; i < amountOfAsteroids; i++) {
-            matrixAsteroids[i] = glm::mat4(1.0f);
-        }
+        matrixMoon = glm::mat4(1.0f);
 
         // clang-format off
         // Space
@@ -645,6 +914,12 @@ int solarSystemRender() {
         float offset = 2.5f;
 
         // Asteroids
+        glm::mat4 matrixAsteroids[amountOfAsteroids];
+        // Asteroids
+        for (int i = 0; i < amountOfAsteroids; i++) {
+            matrixAsteroids[i] = glm::mat4(1.0f);
+        }
+
         for (int i = 0; i < amountOfAsteroids; i++) {
             matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(0.0f, 0.0f, 0.0f));
             // matrixAsteroids[i] = glm::scale(matrixAsteroids[i], glm::vec3(3.0f, 3.0f, 3.0f));
@@ -659,7 +934,8 @@ int solarSystemRender() {
             matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(x, y, z));
 
             // 2. scale: Scale between 0.05 and 0.25f
-            float scale = static_cast<float>((rand() % 50) / 100.0 + 0.25);
+            // float scale = static_cast<float>((rand() % 50) / 100.0 + 0.25);
+            float scale = static_cast<float>((rand() % 180) / 200.0 + 0.50);
             matrixAsteroids[i] = glm::scale(matrixAsteroids[i], glm::vec3(scale));
 
             // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
@@ -755,18 +1031,18 @@ int solarSystemRender() {
         glBindTexture(GL_TEXTURE_2D, moonMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, moonModel, view, projection, matrixMoon, lightingShader);
 
-        if (showPlanetsMenu) {
+        if (showPlanetsMenu) {            
             // text rendering comes last
             //glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
             glEnable(GL_BLEND);
             glEnable(GL_CULL_FACE);
             textShader.use();
             // Name of the planet
-            RenderText(textShader, earthInfo[0], 25.0f, 550.0f, 1.0f, glm::vec3(0.73, 0.27f, 0.94f)); // purple
+            RenderText(textShader, curPlanetInfo[0], 25.0f, 550.0f, 1.0f, glm::vec3(0.00, 0.00f, 0.00f)); // Star Wars Yellow
             // Description of the planet
-            RenderText(textShader, earthInfo[1], 25.0f, 90.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
-            RenderText(textShader, earthInfo[2], 25.0f, 60.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
-            RenderText(textShader, earthInfo[3], 25.0f, 30.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+            RenderText(textShader, curPlanetInfo[1], 25.0f, 90.0f, 0.5f, glm::vec3(0.00, 0.00f, 0.00f)); 
+            RenderText(textShader, curPlanetInfo[2], 25.0f, 60.0f, 0.5f, glm::vec3(0.00, 0.00f, 0.00f)); 
+            RenderText(textShader, curPlanetInfo[3], 25.0f, 30.0f, 0.5f, glm::vec3(0.00, 0.00f, 0.00f)); 
         }
 
         // Crosshair
@@ -782,6 +1058,8 @@ int solarSystemRender() {
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        glFlush();
     }
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
@@ -806,13 +1084,6 @@ void processInput(GLFWwindow* window) {
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-
-    // if (glfwGetKey(window, GLFW_KEY_UP))
-
-    // restart
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-        camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
-    }
 
     // Cursor callback
     glfwSetKeyCallback(window, keyboardCallbacks);
@@ -904,7 +1175,7 @@ void RenderText(Shader& shader, std::string text, float x, float y, float scale,
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-// Load planets info
+// Load planets info from text file
 std::vector<std::string> readInfo(const std::string& filePath) {
     std::vector<std::string> info;
     std::ifstream file(path + "/resources/info/" + filePath);

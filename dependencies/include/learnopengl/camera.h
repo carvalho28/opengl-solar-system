@@ -64,6 +64,12 @@ class Camera {
         updateCameraVectors();
     }
 
+    // constructor with position
+    // Camera(glm::vec3 position) : Front(glm::vec3(0.0f, 0.0f, -1.0f)) {
+    //     Position = position;
+    //     updateCameraVectors();
+    // }
+
     // returns the view matrix calculated using Euler Angles and the LookAt
     // Matrix
     glm::mat4 GetViewMatrix() {
