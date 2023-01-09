@@ -727,11 +727,12 @@ int solarSystemRender() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("model_loading.vs", "model_loading.fs");
-    Shader lightingShader("lighting.vs", "lighting.fs");
-    Shader sunlightShader("sunlight.vs", "sunlight.fs");
-    Shader asteroidShader("asteroid.vs", "asteroid.fs");
-    Shader textShader("text.vs", "text.fs");
+    // Shader ourShader("pamodel_loading.vs", "model_loading.fs");
+    Shader ourShader("./shaders/model_loading.vs", "./shaders/model_loading.fs");
+    Shader lightingShader("./shaders/lighting.vs", "./shaders/lighting.fs");
+    Shader sunlightShader("./shaders/sunlight.vs", "./shaders/sunlight.fs");
+    Shader asteroidShader("./shaders/asteroid.vs", "./shaders/asteroid.fs");
+    Shader textShader("./shaders/text.vs", "./shaders/text.fs");
 
     // load models
     Model spaceModel(sphere_obj); // skybox sphere
