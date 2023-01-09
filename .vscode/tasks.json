@@ -33,7 +33,9 @@
         "-framework",
         "CoreFoundation",
         "-Wno-deprecated",
-        "-lfreetype"
+        "-lfreetype",
+        "-lglut",
+        "-lGL"
       ],
       "options": {
         "cwd": "${fileDirname}"

@@ -25,12 +25,14 @@
 #include FT_FREETYPE_H
 
 #include "main.h"
+#include "main-menu.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void RenderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
+std::vector<std::string> readInfo(const std::string& filePath);
 
 
 struct Character {
@@ -76,7 +78,7 @@ std::string jupiter_tex = path + "/resources/textures/jupiter_texture.jpg";
 std::string saturn_tex = path + "/resources/textures/saturn_texture.jpg";
 // --SATURN RING
 std::string saturn_ring_tex =
-    path + "/resources/textures/saturn_rings_texture.png";
+    path + "/resources/textures/saturn_rings_texture.jpg";
 // --URANUS
 std::string uranus_tex = path + "/resources/textures/uranus_texture.jpg";
 // --NEPTUNE
@@ -86,6 +88,17 @@ std::string neptune_tex = path + "/resources/textures/neptune_texture.jpg";
 // --ARIAL
 std::string arial_font = path + "/resources/fonts/Poppins-Regular.ttf";
 
+// INFO
+std::vector<std::string> sunInfo = readInfo("sun_info.txt");
+std::vector<std::string> mercuryInfo = readInfo("mercury_info.txt");
+std::vector<std::string> venusInfo = readInfo("venus_info.txt");
+std::vector<std::string> earthInfo = readInfo("earth_info.txt");
+std::vector<std::string> marsInfo = readInfo("mars_info.txt");
+std::vector<std::string> jupiterInfo = readInfo("jupiter_info.txt");
+std::vector<std::string> saturnInfo = readInfo("saturn_info.txt");
+std::vector<std::string> uranusInfo = readInfo("uranus_info.txt");
+std::vector<std::string> neptuneInfo = readInfo("neptune_info.txt");
+ 
 // VARS
 static int amountOfAsteroids = 1000;
 
@@ -106,26 +119,26 @@ unsigned int tqVAO, tqVBO;  // Texture quads
 
 // TODO: 60s = 1 rotation = 1 day
 
+// Earth
+float sun_earth_distance = -200.0f;
+float r_earth_itself = 0.0f;
+float r_earth_sun = 0.0f;
+float r_earth_itself_rate = .001;
+float r_earth_sun_rate = 0.001;
+
 // Mercury
 float sun_mercury_distance = -78.0f;
 float r_mercury_itself = 0.0f;
 float r_mercury_sun = 0.0f;
-float r_mercury_itself_rate = 0.001;
-float r_mercury_sun_rate = 0.001;
+float r_mercury_itself_rate = r_earth_itself_rate/58.6;
+float r_mercury_sun_rate = 4.15 * r_earth_sun_rate;
 
 // Venus
 float sun_venus_distance = -144.0f;
 float r_venus_itself = 0.0f;
 float r_venus_sun = 0.0f;
-float r_venus_itself_rate = 0.001;
-float r_venus_sun_rate = 0.001;
-
-// Earth
-float sun_earth_distance = -200.0f;
-float r_earth_itself = 0.0f;
-float r_earth_sun = 0.0f;
-float r_earth_itself_rate = 0.001;
-float r_earth_sun_rate = 0.001;
+float r_venus_itself_rate = r_earth_itself_rate/243;
+float r_venus_sun_rate = r_earth_sun_rate * 1.62;
 
 // Moon
 float sun_moon_distance = -200.0f;
@@ -139,36 +152,36 @@ float r_moon_earth_rate = 0.05;
 float sun_mars_distance = -304.0f;
 float r_mars_itself = 0.0f;
 float r_mars_sun = 0.0f;
-float r_mars_itself_rate = 0.001;
-float r_mars_sun_rate = 0.001;
+float r_mars_itself_rate = r_earth_itself_rate * (1+1/48);
+float r_mars_sun_rate = r_earth_sun_rate / 1.9;
 
 // Jupiter
 float sun_jupiter_distance = -778.0f;
 float r_jupiter_itself = 0.0f;
 float r_jupiter_sun = 0.0f;
-float r_jupiter_itself_rate = 0.001;
-float r_jupiter_sun_rate = 0.001;
+float r_jupiter_itself_rate = r_earth_itself_rate/0.375;
+float r_jupiter_sun_rate = r_earth_sun_rate / 12;
 
 // Saturn
-float sun_saturn_distance = -1427.0f;
+float sun_saturn_distance = -1727.0f;
 float r_saturn_itself = 0.0f;
 float r_saturn_sun = 0.0f;
-float r_saturn_itself_rate = 0.001;
-float r_saturn_sun_rate = 0.001;
+float r_saturn_itself_rate = r_earth_itself_rate/0.47;
+float r_saturn_sun_rate = r_earth_sun_rate / 29;
 
 // Uranus
-float sun_uranus_distance = -2000.0f;
+float sun_uranus_distance = -2500.0f;
 float r_uranus_itself = 0.0f;
 float r_uranus_sun = 0.0f;
-float r_uranus_itself_rate = 0.001;
-float r_uranus_sun_rate = 0.001;
+float r_uranus_itself_rate = r_earth_itself_rate/0.71;
+float r_uranus_sun_rate = r_earth_sun_rate / 84;
 
 // Neptune
-float sun_neptune_distance = -2500.0f;
+float sun_neptune_distance = -300.0f;
 float r_neptune_itself = 0.0f;
 float r_neptune_sun = 0.0f;
-float r_neptune_itself_rate = 0.001;
-float r_neptune_sun_rate = 0.001;
+float r_neptune_itself_rate = r_earth_itself_rate/0.67;
+float r_neptune_sun_rate = r_earth_sun_rate / 165;
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -346,7 +359,7 @@ void planetRotationItself(float* rotationItself, float rateItself,
                           glm::mat4* planet) {
     // *rotationItself += rateItself;
     *planet = glm::rotate(*planet, *rotationItself,
-                          glm::vec3(0.0f, 0.5f, 0.0f));  // is this hardcoded??
+                          glm::vec3(0.0f, 0.5f, 0.2f));  // is this hardcoded??
     *rotationItself += rateItself;
 }
 
@@ -703,7 +716,7 @@ int solarSystemRender() {
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, saturnModel, view, projection, matrixSaturn, lightingShader);
 
         glBindTexture(GL_TEXTURE_2D, saturnRingMap);
-        loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, saturnRingModel, view, projection, matrixSaturnRing, lightingShader);
+        loadPlanetWithLight(ambientStrength*3, diffuseStrength*5*5, specularStrength, shininessStrength *32, saturnRingModel, view, projection, matrixSaturnRing, lightingShader);
         
         glBindTexture(GL_TEXTURE_2D, uranusMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, uranusModel, view, projection, matrixUranus, lightingShader);
@@ -725,8 +738,13 @@ int solarSystemRender() {
         glEnable(GL_BLEND);
         glEnable(GL_CULL_FACE);
         textShader.use();
-        RenderText(textShader, "mmmmmmmmm", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-        RenderText(textShader, "mmmmmmmmmmm", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
+        // Name of the planet
+        RenderText(textShader, "Earth", 25.0f, 550.0f, 1.0f, glm::vec3(0.73, 0.27f, 0.94f)); // purple
+        // Description of the planet
+        RenderText(textShader, "Our home planet is the third planet from the Sun,", 25.0f, 70.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+        RenderText(textShader, "and the only place we know of so far that’s", 25.0f, 50.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+        RenderText(textShader, "inhabited by living things.", 25.0f, 30.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+        // Crosshair
         RenderText(textShader, ".", 400.0f, 300.0f, 0.5f, glm::vec3(1.0, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection_hud));
         glDisable(GL_BLEND);
@@ -744,6 +762,7 @@ int solarSystemRender() {
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
+    closeProgram();
     return 0;
 }
 
@@ -848,4 +867,25 @@ void RenderText(Shader& shader, std::string text, float x, float y, float scale,
     }
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+// Load planets info
+std::vector<std::string> readInfo(const std::string& filePath) {
+    std::vector<std::string> info;
+    std::ifstream file(path + "/resources/info/" + filePath);
+
+    if (!file.is_open()) {
+        std::cout << "Cannot open file." << std::endl;
+        return info;
+    }
+
+    // Read file line by line
+    std::string line;
+    while (std::getline(file, line)) {
+        info.push_back(line);
+    }
+
+    file.close();
+
+    return info;
 }

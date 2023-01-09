@@ -4,26 +4,38 @@
 #include "main.h"
 #include <string.h> 
 #include <GL/glut.h>
+#include <stdlib.h>
+#include <iostream>
+#include <filesystem>
 // clang-format on
+#include "main-menu.h"
+
+float sx = 1.0;
+float sy = 1.0;
 
 // Window dimensions
 const int WIDTH = 800;
 const int HEIGHT = 600;
+int window;
 
-void drawText(char* string, int x, int y) {
-    glRasterPos2i(x, y);
-    int len = strlen(string);
-    for (int i = 0; i < len; i++) {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, string[i]);
+void closeWindow() { glutDestroyWindow(window); }
+
+// void close program
+void closeProgram() {
+    glutDestroyWindow(window);
+    exit(0);
+}
+
+// render string increased font
+void renderTitle(const char* str) {
+    for (size_t i = 0; i < strlen(str); i++) {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, str[i]);
     }
 }
 
-// draw text centered big in the middle of the screen
-void drawCenteredText(char* str, int x, int y, void* font) {
-    int len = glutBitmapLength(font, (unsigned char*)str);
-    glRasterPos2i(x - len / 2, y);
-    for (int i = 0; i < len; i++) {
-        glutBitmapCharacter(font, str[i]);
+void renderString(const char* str) {
+    for (size_t i = 0; i < strlen(str); i++) {
+        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, str[i]);
     }
 }
 
@@ -49,9 +61,14 @@ void display() {
     glVertex2f(WIDTH / 2 - 100, HEIGHT / 2 + 50);
     glEnd();
 
+    // glEnable(GL_LIGHTING);
     // draw the text
-    glColor3f(0, 0, 0);
-    drawText("Start Game!", WIDTH / 2 - 80, HEIGHT / 2 - 10);
+    glColor3f(1, 0, 0);
+    int widthStart = glutBitmapLength(GLUT_BITMAP_9_BY_15,
+                                      (const unsigned char*)"Start Game");
+    glRasterPos2f(WIDTH / 2 - widthStart / 2, HEIGHT / 2 - 10);
+    renderString("Start Game");
+    glFlush();
 
     // Draw the "Exit" button centered in the window below the "Start Game"
     // button
@@ -65,11 +82,19 @@ void display() {
 
     // draw the text
     glColor3f(0, 0, 0);
-    drawText("Exit", WIDTH / 2 - 20, HEIGHT / 2 - 190);
+    int widthExit =
+        glutBitmapLength(GLUT_BITMAP_9_BY_15, (const unsigned char*)"Exit");
+    glRasterPos2f(WIDTH / 2 - widthExit / 2, HEIGHT / 2 - 210);
+    renderString("Exit");
+    glFlush();
 
     // set above the start game button, a heading saying "Solar System"
     glColor3f(1, 1, 1);
-    drawText("Solar System", WIDTH / 2 - 100, HEIGHT / 2 + 100);
+    int widthSolarSystem = glutBitmapLength(
+        GLUT_BITMAP_9_BY_15, (const unsigned char*)"Solar System");
+    glRasterPos2f(WIDTH / 2 - widthSolarSystem / 2, HEIGHT / 2 + 100);
+    renderTitle("Solar System");
+    glFlush();
 
     // Swap buffers
     glutSwapBuffers();
@@ -89,9 +114,16 @@ void loadingScreen() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    // scale the size of the text
+    glScalef(1, 2, 1);
+
     // set above the start game button, a heading saying "Solar System"
     glColor3f(1, 1, 1);
-    drawText("Loading...", WIDTH / 2 - 100, HEIGHT / 2 + 100);
+    int widthLoading = glutBitmapLength(GLUT_BITMAP_9_BY_15,
+                                        (const unsigned char*)"Loading...");
+    glRasterPos2f(WIDTH / 2 - widthLoading / 2, HEIGHT / 2 + 100);
+    renderString("Loading...");
+    glFlush();
 
     // Swap buffers
     glutSwapBuffers();
@@ -100,22 +132,22 @@ void loadingScreen() {
 // check if the mouse was clicked inside the button
 void mouse(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        printf("Mouse clicked at (%d, %d)\n", x, y);
         // Check if the mouse was clicked inside the "Start Game" button
         if (x >= WIDTH / 2 - 100 && x <= WIDTH / 2 + 100 &&
             y >= HEIGHT / 2 - 50 && y <= HEIGHT / 2 + 50) {
+            printf("Start Game button clicked\n");
             //  show loading screen
             loadingScreen();
-            // close the main menu window
-            glutDestroyWindow(glutGetWindow());
-            // start the solar system
+            // start the solar system and close the main menu
+            glutDestroyWindow(window);
             solarSystemRender();
         }
 
-        // Check if the mouse was clicked inside the "Exit" button
-        if (x >= WIDTH / 2 - 100 && x <= WIDTH / 2 + 100 &&
-            y >= HEIGHT / 2 - 250 && y <= HEIGHT / 2 - 150) {
-            // Close the window
-            glutDestroyWindow(glutGetWindow());
+        if (WIDTH / 2 - 100 <= x && x <= WIDTH / 2 + 100 &&
+            HEIGHT / 2 - 150 <= y && y <= HEIGHT / 2 + 250) {
+            printf("Exit button clicked\n");
+            closeProgram();
         }
     }
 }
@@ -130,9 +162,17 @@ int main(int argc, char** argv) {
     int x = (screenWidth - WIDTH) / 2;
     int y = (screenHeight - HEIGHT) / 2;
     glutInitWindowPosition(x, y);
-    glutCreateWindow("Main Menu");
+    window = glutCreateWindow("Main Menu");
+
     glutDisplayFunc(display);
     glutMouseFunc(mouse);
+    glutWMCloseFunc(closeWindow);
+    // close on escape
+    glutKeyboardFunc([](unsigned char key, int x, int y) {
+        if (key == 27) {
+            closeProgram();
+        }
+    });
     glutMainLoop();
     return 0;
 }
