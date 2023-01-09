@@ -165,7 +165,7 @@ float r_mercury_sun_rate = 4.15 * r_earth_sun_rate;
 float sun_venus_distance = -144.0f;
 float r_venus_itself = 0.0f;
 float r_venus_sun = 0.0f;
-float r_venus_itself_rate = r_earth_itself_rate/243;
+float r_venus_itself_rate = -1 * (r_earth_itself_rate/243);
 float r_venus_sun_rate = r_earth_sun_rate * 1.62;
 
 // Moon
@@ -403,11 +403,7 @@ void planetRotationItself(float* rotationItself, float rateItself,
 
 // Function to rotate satellite around planet
 // clang-format off
-void satelliteAroundPlanet(float* rotationPlanet, 
-                           float rateAroundPlanet,
-                           float distanceToPlanet, 
-                           glm::mat4* planet,
-                           glm::mat4* satellite) {
+void satelliteAroundPlanet(float* rotationPlanet, float rateAroundPlanet, float distanceToPlanet, glm::mat4* planet, glm::mat4* satellite) {
     float satelliteX = ((distanceToPlanet) * cos((*rotationPlanet)));
     float satelliteZ = ((distanceToPlanet) * sin((*rotationPlanet)));
     // clang-format off
@@ -825,30 +821,6 @@ int solarSystemRender() {
             getXYZ(xpos, ypos, projection, view, modelMatrices, &textShader);
         }
 
-        // cout << "Here 3\n";
-
-        // asteroidShader.use();
-        // asteroidShader.setMat4("projection", projection);
-        // asteroidShader.setMat4("view", view);
-
-
-        // // render the loaded model
-        // glm::mat4 matrixSpace = glm::mat4(1.0f);
-        // glm::mat4 matrixSun = glm::mat4(1.0f);
-        // // Planets
-        // glm::mat4 matrixMercury = glm::mat4(1.0f);
-        // glm::mat4 matrixVenus = glm::mat4(1.0f);
-        // glm::mat4 matrixEarth = glm::mat4(1.0f);
-        // glm::mat4 matrixMars = glm::mat4(1.0f);
-        // glm::mat4 matrixJupiter = glm::mat4(1.0f);
-        // glm::mat4 matrixSaturn = glm::mat4(1.0f);
-        // glm::mat4 matrixSaturnRing = glm::mat4(1.0f);
-        // glm::mat4 matrixUranus = glm::mat4(1.0f);
-        // glm::mat4 matrixNeptune = glm::mat4(1.0f);
-
-        // // Satellites
-        // glm::mat4 matrixMoon = glm::mat4(1.0f);
-
         // render the loaded model
         matrixSpace = glm::mat4(1.0f);
         matrixSun = glm::mat4(1.0f);
@@ -1009,7 +981,7 @@ int solarSystemRender() {
         float radius = 400.0f; // default is 50.0
         float offset = 2.5f;
 
-        // Asteroids
+        // Asteroids Transformations
         glm::mat4 matrixAsteroids[amountOfAsteroids];
         // Asteroids
         for (int i = 0; i < amountOfAsteroids; i++) {
@@ -1018,23 +990,23 @@ int solarSystemRender() {
 
         for (int i = 0; i < amountOfAsteroids; i++) {
             matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(0.0f, 0.0f, 0.0f));
-            // matrixAsteroids[i] = glm::scale(matrixAsteroids[i], glm::vec3(3.0f, 3.0f, 3.0f));
             float angle = (float)i / (float)amountOfAsteroids * 360.0f;
             float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
             float x = sin(angle) * radius + displacement;
             displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-            float y = displacement * 0.4f; // keep height of asteroid field smaller compared to width of x and z
+            float y = displacement * 0.4f; 
+
+            // displacement
             displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
             float z = cos(angle) * radius + displacement;
 
             matrixAsteroids[i] = glm::translate(matrixAsteroids[i], glm::vec3(x, y, z));
 
-            // 2. scale: Scale between 0.05 and 0.25f
-            // float scale = static_cast<float>((rand() % 50) / 100.0 + 0.25);
+            // scale
             float scale = static_cast<float>((rand() % 180) / 200.0 + 0.50);
             matrixAsteroids[i] = glm::scale(matrixAsteroids[i], glm::vec3(scale));
 
-            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+            // rotation
             float rotAngle = static_cast<float>((rand() % 360));
             matrixAsteroids[i] = glm::rotate(matrixAsteroids[i], rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
         
