@@ -47,7 +47,7 @@ class Camera {
         Position = glm::vec3(-150.0f, 200.0f, 200.0f);
         WorldUp = up;
         Yaw = yaw;
-        Pitch = pitch;
+        Pitch = -15.0f;
         updateCameraVectors();
     }
     // constructor with scalar values

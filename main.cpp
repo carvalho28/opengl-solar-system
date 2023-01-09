@@ -9,7 +9,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
 
-// #include <learnopengl/filesystem.h>
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
@@ -85,7 +84,6 @@ std::string uranus_tex = path + "/resources/textures/uranus_texture.jpg";
 std::string neptune_tex = path + "/resources/textures/neptune_texture.jpg";
 
 // FONTS
-// --ARIAL
 std::string arial_font = path + "/resources/fonts/Poppins-Regular.ttf";
 
 // INFO
@@ -196,6 +194,8 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+bool showPlanetsMenu = false;
 
 // convert cursor position to normalized device coordinates
 void getXYZ(float xPos, float yPos, glm::mat4 projection, glm::mat4 view,
@@ -379,6 +379,29 @@ void satelliteAroundPlanet(float* rotationPlanet,
     *rotationPlanet += rateAroundPlanet;
 }
 
+// keyboard callback
+void keyboardCallbacks(GLFWwindow *window, int key, int scancode, int action,
+                       int mods) {
+                        
+    // text menu
+    if (key == GLFW_KEY_M && action == GLFW_PRESS) {
+        showPlanetsMenu = !showPlanetsMenu;
+    }
+    
+    // move up on long press
+    if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
+
+    }
+    // move down on long press
+    if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+
+    }
+    // reset model on r press
+    if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+
+    }
+}
+
 int solarSystemRender() {
     // glfw: initialize and configure
     // ------------------------------
@@ -394,7 +417,7 @@ int solarSystemRender() {
     // glfw window creation
     // --------------------
     GLFWwindow* window =
-        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+        glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Solar System", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -439,7 +462,6 @@ int solarSystemRender() {
     Shader textShader("text.vs", "text.fs");
 
     // load models
-
     Model spaceModel(sphere_obj); // skybox sphere
 
     Model sunModel(sphere_obj);
@@ -480,6 +502,12 @@ int solarSystemRender() {
 
     glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
 
+    glEnable(GL_CULL_FACE); // was disabled by default
+    glEnable(GL_BLEND);
+    loadFont();
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_BLEND);
+
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -501,12 +529,6 @@ int solarSystemRender() {
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // set texture to background
-
-        glEnable(GL_CULL_FACE); // was disabled by default
-        glEnable(GL_BLEND);
-        loadFont();
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_BLEND);
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
@@ -733,17 +755,20 @@ int solarSystemRender() {
         glBindTexture(GL_TEXTURE_2D, moonMap);
         loadPlanetWithLight(ambientStrength, diffuseStrength, specularStrength, shininessStrength, moonModel, view, projection, matrixMoon, lightingShader);
 
-        // text rendering comes last
-        //glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
-        glEnable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        textShader.use();
-        // Name of the planet
-        RenderText(textShader, "Earth", 25.0f, 550.0f, 1.0f, glm::vec3(0.73, 0.27f, 0.94f)); // purple
-        // Description of the planet
-        RenderText(textShader, "Our home planet is the third planet from the Sun,", 25.0f, 70.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
-        RenderText(textShader, "and the only place we know of so far that’s", 25.0f, 50.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
-        RenderText(textShader, "inhabited by living things.", 25.0f, 30.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+        if (showPlanetsMenu) {
+            // text rendering comes last
+            //glm::mat4 projection_hud = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f);
+            glEnable(GL_BLEND);
+            glEnable(GL_CULL_FACE);
+            textShader.use();
+            // Name of the planet
+            RenderText(textShader, earthInfo[0], 25.0f, 550.0f, 1.0f, glm::vec3(0.73, 0.27f, 0.94f)); // purple
+            // Description of the planet
+            RenderText(textShader, earthInfo[1], 25.0f, 90.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+            RenderText(textShader, earthInfo[2], 25.0f, 60.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+            RenderText(textShader, earthInfo[3], 25.0f, 30.0f, 0.5f, glm::vec3(0.59, 0.08f, 0.82f)); // slightly darker purple
+        }
+
         // Crosshair
         RenderText(textShader, ".", 400.0f, 300.0f, 0.5f, glm::vec3(1.0, 1.0f, 0.0f));
         glUniformMatrix4fv(glGetUniformLocation(textShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection_hud));
@@ -781,6 +806,16 @@ void processInput(GLFWwindow* window) {
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    // if (glfwGetKey(window, GLFW_KEY_UP))
+
+    // restart
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        camera = Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+    }
+
+    // Cursor callback
+    glfwSetKeyCallback(window, keyboardCallbacks);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this

@@ -10,9 +10,6 @@
 // clang-format on
 #include "main-menu.h"
 
-float sx = 1.0;
-float sy = 1.0;
-
 // Window dimensions
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -28,15 +25,32 @@ void closeProgram() {
 
 // render string increased font
 void renderTitle(const char* str) {
+    glScalef(3.0, 3.0, 3.0);
     for (size_t i = 0; i < strlen(str); i++) {
         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, str[i]);
     }
+    glScalef(1 / 1.5, 1 / 1.5, 1 / 1.5);
 }
 
 void renderString(const char* str) {
     for (size_t i = 0; i < strlen(str); i++) {
         glutBitmapCharacter(GLUT_BITMAP_9_BY_15, str[i]);
     }
+}
+
+// render string using glutStrokeCharacter with scale
+void renderStrokeString(const char* str, int x, int y, float sx, float sy,
+                        float sz) {
+    glPushMatrix();
+    // move to position
+    glTranslatef(x, y, 0);
+    glScalef(sx, sy, sz);
+    // increase line width and render
+    glLineWidth(3);
+    for (size_t i = 0; i < strlen(str); i++) {
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, str[i]);
+    }
+    glPopMatrix();
 }
 
 void display() {
@@ -61,17 +75,14 @@ void display() {
     glVertex2f(WIDTH / 2 - 100, HEIGHT / 2 + 50);
     glEnd();
 
-    // glEnable(GL_LIGHTING);
     // draw the text
     glColor3f(1, 0, 0);
-    int widthStart = glutBitmapLength(GLUT_BITMAP_9_BY_15,
-                                      (const unsigned char*)"Start Game");
-    glRasterPos2f(WIDTH / 2 - widthStart / 2, HEIGHT / 2 - 10);
-    renderString("Start Game");
-    glFlush();
+    int widthStart =
+        glutStrokeLength(GLUT_STROKE_ROMAN, (const unsigned char*)"Start Game");
+    renderStrokeString("Start Game", WIDTH / 2 - widthStart / 10,
+                       HEIGHT / 2 - 10, 0.2, 0.2, 0.2);
 
     // Draw the "Exit" button centered in the window below the "Start Game"
-    // button
     glColor3f(1, 1, 1);
     glBegin(GL_QUADS);
     glVertex2f(WIDTH / 2 - 100, HEIGHT / 2 - 150);
@@ -83,18 +94,16 @@ void display() {
     // draw the text
     glColor3f(0, 0, 0);
     int widthExit =
-        glutBitmapLength(GLUT_BITMAP_9_BY_15, (const unsigned char*)"Exit");
-    glRasterPos2f(WIDTH / 2 - widthExit / 2, HEIGHT / 2 - 210);
-    renderString("Exit");
-    glFlush();
+        glutStrokeLength(GLUT_STROKE_ROMAN, (const unsigned char*)"Exit");
+    renderStrokeString("Exit", WIDTH / 2 - widthExit / 10, HEIGHT / 2 - 210,
+                       0.2, 0.2, 0.2);
 
     // set above the start game button, a heading saying "Solar System"
     glColor3f(1, 1, 1);
-    int widthSolarSystem = glutBitmapLength(
-        GLUT_BITMAP_9_BY_15, (const unsigned char*)"Solar System");
-    glRasterPos2f(WIDTH / 2 - widthSolarSystem / 2, HEIGHT / 2 + 100);
-    renderTitle("Solar System");
-    glFlush();
+    int width = glutStrokeLength(GLUT_STROKE_ROMAN,
+                                 (const unsigned char*)"Solar System");
+    renderStrokeString("Solar System", WIDTH / 2 - width / 4, HEIGHT / 2 + 150,
+                       0.5, 0.5, 0.5);
 
     // Swap buffers
     glutSwapBuffers();
@@ -119,11 +128,10 @@ void loadingScreen() {
 
     // set above the start game button, a heading saying "Solar System"
     glColor3f(1, 1, 1);
-    int widthLoading = glutBitmapLength(GLUT_BITMAP_9_BY_15,
-                                        (const unsigned char*)"Loading...");
-    glRasterPos2f(WIDTH / 2 - widthLoading / 2, HEIGHT / 2 + 100);
-    renderString("Loading...");
-    glFlush();
+    int widthLoading =
+        glutStrokeLength(GLUT_STROKE_ROMAN, (const unsigned char*)"Loading...");
+    renderStrokeString("Loading...", WIDTH / 2 - widthLoading / 10,
+                       HEIGHT / 2 - 150, 0.2, 0.2, 0.2);
 
     // Swap buffers
     glutSwapBuffers();
